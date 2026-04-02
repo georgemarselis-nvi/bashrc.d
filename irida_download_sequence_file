@@ -16,4 +16,4 @@ download_irida_sequence_file() {
     echo "Downloaded: ${filename}"
 }
 
-complete -F _irida_download_complete download_irida_sequence_file
+complete -F _irida_download_complete irida_download_sequence_file
