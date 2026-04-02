@@ -1,0 +1,3 @@
+check_irida_token() {
+    [[ -n "${IRIDA_TOKEN}" ]] || { echo "no IRIDA token - run get_irida_token first" ; return 1 ; }
+}
