@@ -5,11 +5,12 @@
 
 get_irida_token() {
     check_irida_connectivity || { echo "IRIDA unreachable" ; return 1 ; }
+    check_bitwarden_serve || { echo "bw-serve.service not running;start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh" ; return 1 ; }
     BW_URL="http://127.0.0.1:8087"
     BW_ITEM="irida.vigasp.vetinst.no"
-    CLIENT_ID=$( /usr/bin/curl --silent "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
-    USERNAME=$( /usr/bin/curl --silent "${BW_URL}/object/username/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
-    PASSWORD=$( /usr/bin/curl --silent "${BW_URL}/object/password/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
-    CLIENT_SECRET=$( /usr/bin/curl --silent "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^token:' | /usr/bin/sed 's/^token://' )
-    export IRIDA_TOKEN=$(/usr/bin/curl --silent --no-progress-meter -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token')
+    CLIENT_ID=$( /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
+    USERNAME=$(  /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/username/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
+    PASSWORD=$(  /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/password/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
+    CLIENT_SECRET=$( /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^token:' | /usr/bin/sed 's/^token://' )
+    export IRIDA_TOKEN=$(/usr/bin/curl --silent -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token')
 }

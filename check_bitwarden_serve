@@ -1,0 +1,7 @@
+# check if bw-serve.service is running
+# returns 0 if running, non-zero if not
+# example: check_bitwarden_serve && get_irida_token || echo "bw serve not running"
+
+check_bitwarden_serve() {
+    systemctl --user is-active --quiet bw-serve.service
+}
