@@ -2,6 +2,8 @@
 #
 # nothing to tab
 
-get_irida_samples() { /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .sampleName, organism: .organism, collected_by: .collectedBy}]' | /usr/bin/mlr --ijson --opprint cat ; }
+get_irida_samples() {
+    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .sampleName, organism: .organism, collected_by: .collectedBy}]' | /usr/bin/mlr --ijson --opprint cat ;
+}
 
 complete -F _irida_projects_complete get_irida_samples

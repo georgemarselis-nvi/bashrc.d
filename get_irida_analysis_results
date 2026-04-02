@@ -6,8 +6,8 @@
 # example: get_irida_analysis_results [TAB for project] 13:Slush [TAB again to get the analysis number after selecting a project id] 10295:Reads_QC__5-16-2023_2020-01-3321
 
 get_irida_analysis_results() {
-    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" \
-        -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq . ; echo
+    check_irida_connectivity || { echo "IRIDA unreachable" ; return 1 ; }
+    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq . ; echo
 }
 
 complete -F _irida_analysis_complete get_irida_analysis_results
