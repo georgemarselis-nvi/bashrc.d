@@ -44,3 +44,16 @@ _irida_download_complete() {
     fi
 }
 
+# provides three-level tab completion: project list, then samples from that project, then pairs from that sample
+_irida_download_pair_complete() {
+    if [[ "${COMP_CWORD}" -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
+        local project_id="${COMP_WORDS[1]%%:*}"
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    elif [[ "${COMP_CWORD}" -eq 3 ]]; then
+        local sample_id="${COMP_WORDS[2]%%:*}"
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    fi
+}
+
