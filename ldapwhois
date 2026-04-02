@@ -1,0 +1,35 @@
+# look up a user's display name in Active Directory via LDAP using Kerberos auth
+# accepts username with or without @vetinst.no suffix
+#
+# example:  ldapwhois vi1234 
+#           ldapwhois vi1234@vetinst.no
+#           ldapwhois vi1234@ve
+#           ldapwhois vi1234@vet
+
+
+ldapwhois() {
+    local user="$1"
+
+    # Ensure user input format
+    [[ "$user" != *@* ]] && user="${user}@vetinst.no"
+
+    # Extract viXXXX part for klist check
+    local principal="${user%@*}@vetinst.no"
+
+    # Check for valid Kerberos ticket
+    if ! klist -s; then
+        echo "No valid Kerberos ticket found. Please enter your password."
+        read -s -p "Enter password: " password
+        echo
+        echo "$password" | kinit "$principal"
+        if [[ $? -ne 0 ]]; then
+            echo "Kerberos authentication failed."
+            return 1
+        fi
+    fi
+
+    # Perform LDAP search
+    ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no "(&(objectClass=user)(userPrincipalName=${user}))" displayName
+}
+
+ldapwho() { ldapwhois "$@"; }

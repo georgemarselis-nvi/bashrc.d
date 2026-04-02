@@ -1,0 +1,11 @@
+# get paired-end sequence file metadata for a sample. Does not download any files
+#
+# PROJECT_ID is used only for tab completion to narrow down samples, not passed to the API
+# SAMPLE_ID is the actual argument used in the curl call
+# example: get_irida_sample_pairs [TAB once to get the project id] 150 [TAB again after selecting a project id] 1234
+#
+# NOTE: ${2%%:*} strips :name suffix from identifier:name tab completion output, leaving just the numeric ID.
+
+get_irida_sample_pairs() { /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, files: [.files[].fileName]}]' | /usr/bin/mlr --ijson --opprint cat ; }
+
+complete -F _irida_sample_files_complete get_irida_sample_pairs_metadata

@@ -1,0 +1,12 @@
+# get full metadata for a single sample
+# PROJECT_ID is used only for tab completion, not passed to the API
+# SAMPLE_ID is the actual argument used in the curl call
+#
+# example: get_irida_sample_metadata [TAB once to get the project id] 2:Test_Data_Uploading [TAB again to get the sample id after tabbing the project] 3:sample-1-Added
+
+get_irida_sample_metadata() {
+    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}" \
+        -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq . ; echo
+}
+
+complete -F _irida_sample_files_complete get_irida_sample_metadata

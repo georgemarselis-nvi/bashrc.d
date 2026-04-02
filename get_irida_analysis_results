@@ -1,0 +1,13 @@
+# get outputs of a completed analysis in a project
+#
+# PROJECT_ID is used only for tab completion, not passed to the API
+# ANALYSIS_ID is the actual argument used in the curl call
+#
+# example: get_irida_analysis_results [TAB for project] 13:Slush [TAB again to get the analysis number after selecting a project id] 10295:Reads_QC__5-16-2023_2020-01-3321
+
+get_irida_analysis_results() {
+    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" \
+        -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq . ; echo
+}
+
+complete -F _irida_analysis_complete get_irida_analysis_results

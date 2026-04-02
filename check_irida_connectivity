@@ -1,0 +1,8 @@
+# check if IRIDA server is reachable
+# returns 0 if reachable, non-zero if not
+#
+# example: check_irida_connectivity && get_irida_token || echo "IRIDA unreachable"
+
+check_irida_connectivity() {
+    /usr/bin/curl --silent --connect-timeout 1 --max-time 1 "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api" -o /dev/null -w "%{http_code}" | grep -q "401"
+}

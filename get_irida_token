@@ -1,0 +1,14 @@
+# get IRIDA OAuth token and export as IRIDA_TOKEN
+# reads credentials from Bitwarden via bw serve (must be running on 127.0.0.1:8087)
+#
+# example: get_irida_token && echo "token: ${IRIDA_TOKEN}"
+
+get_irida_token() {
+    BW_URL="http://127.0.0.1:8087"
+    BW_ITEM="irida.vigasp.vetinst.no"
+    CLIENT_ID=$( /usr/bin/curl --silent "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
+    USERNAME=$( /usr/bin/curl --silent "${BW_URL}/object/username/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
+    PASSWORD=$( /usr/bin/curl --silent "${BW_URL}/object/password/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
+    CLIENT_SECRET=$( /usr/bin/curl --silent "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^token:' | /usr/bin/sed 's/^token://' )
+    export IRIDA_TOKEN=$(/usr/bin/curl --silent --no-progress-meter -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token')
+}

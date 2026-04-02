@@ -1,0 +1,27 @@
+# Shared completion functions for IRIDA bash functions
+# Source this file before all other irida functions in .bashrc
+
+_irida_sample_files() {
+    if [[ "${COMP_CWORD}" -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
+        local project_id="${COMP_WORDS[1]%%:*}"
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    fi
+}
+
+_irida_projects_complete() { COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(    .name)"')" -- "${COMP_WORDS[COMP_CWORD]}")); }
+
+get_irida_analysis_results() {
+    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" \
+        -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq . ; echo
+}
+
+_irida_analysis_complete() {
+    if [[ "${COMP_CWORD}" -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
+        local project_id="${COMP_WORDS[1]%%:*}"
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    fi
+}

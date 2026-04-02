@@ -1,0 +1,8 @@
+# get metadata for all samples in a project
+# PROJECT_ID is used for tab completion and passed to the API
+#
+# example: get_irida_project_metadata [TAB once to get the project id] 13:Slush
+
+get_irida_project_metadata() { /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/samples/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq . | /usr/bin/mlr --ijson --opprint cat ; }
+
+complete -F _irida_projects_complete get_irida_project_metadata

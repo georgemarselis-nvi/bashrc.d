@@ -1,0 +1,13 @@
+# get_irida_sample_files_metadata PROJECT_ID SAMPLE_ID
+#
+# get metadata about the specific files in a project: filename, size, identifier 
+# does not get the file contents.
+# You tab once to get the PROJECT_ID. PROJECT_ID is a visual aid and not used in the actual
+# API call. It is used by the user to pick a project and then select the number of the sample.
+# SAMPLE_ID is the actual argument used in the curl call
+#
+# example: get_irida_sample_files_metadata [TAB once to get the project id] 150:Sashimi [TAB again to get the sample id after selecting a project id] 1234:MySample
+
+get_irida_sample_files_metadata() { /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .fileName, size: .fileSizeBytes}]' | /usr/bin/mlr --ijson --opprint cat ; }
+
+complete -F _irida_samples_complete get_irida_sample_files_metadata

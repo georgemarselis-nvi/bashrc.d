@@ -1,0 +1,8 @@
+# check if FortiClient VPN is connected
+# returns 0 if connected, non-zero if not
+#
+# usage example: check_fortigate_vpn && echo "VPN up" || echo "VPN down"
+
+check_fortigate_vpn() {
+    /opt/forticlient/fortivpn status | grep -qi "connected"
+}

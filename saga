@@ -1,0 +1,7 @@
+saga() {
+    BW_URL="http://127.0.0.1:8087"
+    BW_ITEM="login.saga.sigma2.no"
+    echo "username: $(/usr/bin/curl --silent --no-progress-meter -X GET "${BW_URL}/object/username/${BW_ITEM}" | /usr/bin/jq -r '.data.data')"
+    echo "password: $(/usr/bin/curl --silent --no-progress-meter -X GET "${BW_URL}/object/password/${BW_ITEM}" | /usr/bin/jq -r '.data.data')"
+    echo "totp:     $(/usr/bin/curl --silent --no-progress-meter -X GET "${BW_URL}/object/totp/${BW_ITEM}" | /usr/bin/jq -r '.data.data')"
+}

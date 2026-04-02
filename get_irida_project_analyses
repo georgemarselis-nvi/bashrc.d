@@ -1,0 +1,8 @@
+# get analyses shared with a project
+#
+# PROJECT_ID is used for tab completion and passed to the API
+# example: get_irida_project_analyses [TAB once for project id] 13:Slush
+
+get_irida_project_analyses() { /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .name, state: .analysisState}]' | /usr/bin/mlr --ijson --opprint cat ; }
+
+complete -F _irida_projects_complete get_irida_project_analyses
