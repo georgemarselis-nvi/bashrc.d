@@ -12,4 +12,4 @@ get_irida_sample_pairs_metadata() {
     /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, files: [.files[].fileName]}]' | /usr/bin/mlr --ijson --opprint cat ;
 }
 
-complete -F _irida_sample_files_complete get_irida_sample_pairs_metadata
+complete -F _irida_sample_metadata_complete get_irida_sample_pairs_metadata
