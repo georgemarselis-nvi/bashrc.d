@@ -63,3 +63,13 @@ _irida_download_pair_complete() {
     fi
 }
 
+# tab completion for get_irida_sample_metadata: project list at arg 1, samples from that project at arg 2
+_irida_sample_metadata_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    if [[ "${COMP_CWORD}" -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
+        local project_id="${COMP_WORDS[1]%%:*}"
+        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
+    fi
+}
