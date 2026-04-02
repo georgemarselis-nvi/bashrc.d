@@ -5,7 +5,8 @@
 # example: get_irida_sample_metadata [TAB once to get the project id] 2:Test_Data_Uploading [TAB again to get the sample id after tabbing the project] 3:sample-1-Added
 
 get_irida_sample_metadata() {
-    check_irida_connectivity || { echo "IRIDA unreachable" ; return 1 ; }
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
     /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq . ; echo
 }
 

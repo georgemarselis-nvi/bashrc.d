@@ -2,7 +2,8 @@
 # Source this file before all other irida functions in .bashrc
 
 # provides project then sample ID completions for functions that need both
-_irida_sample_files() {
+_irida_samples_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     if [[ "${COMP_CWORD}" -eq 1 ]]; then
         COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
     elif [[ "${COMP_CWORD}" -eq 2 ]]; then
@@ -13,11 +14,13 @@ _irida_sample_files() {
 
 # provides project ID completions for functions that only need a project
 _irida_projects_complete() { 
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(    .name)"')" -- "${COMP_WORDS[COMP_CWORD]}")); 
 }
 
 # provides project then analysis ID completions for get_irida_analysis_results
 _irida_analysis_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     if [[ "${COMP_CWORD}" -eq 1 ]]; then
         local IFS=$'\n'
         mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}")
@@ -30,6 +33,7 @@ _irida_analysis_complete() {
 
 # provides project, sample, pair, file ID completions for download_irida_sequence_file
 _irida_download_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     if [[ "${COMP_CWORD}" -eq 1 ]]; then
         COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
     elif [[ "${COMP_CWORD}" -eq 2 ]]; then
@@ -47,6 +51,7 @@ _irida_download_complete() {
 
 # provides three-level tab completion: project list, then samples from that project, then pairs from that sample
 _irida_download_pair_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     if [[ "${COMP_CWORD}" -eq 1 ]]; then
         COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
     elif [[ "${COMP_CWORD}" -eq 2 ]]; then
