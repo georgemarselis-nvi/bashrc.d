@@ -27,7 +27,9 @@ get_irida_sample_files_metadata() {
     check_irida_token        || return 1
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (you need the second argument, as well)" ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid sample ID: ${2%%:*}" ; return 1 ; }
-    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .fileName, label: .label, size: .fileSizeBytes, sha256: .uploadSha256, created: .createdDate, modified: .modifiedDate, path: .file}]' | /usr/bin/mlr --ijson --opprint cat ;
+    local response
+    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .fileName, label: .label, size: .fileSizeBytes, sha256: .uploadSha256, created: .createdDate, modified: .modifiedDate, path: .file}]' | /usr/bin/mlr --ijson --opprint cat )
+    [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "sample ${2%%:*} has no sequence files" ; return 1 }
 }
 
 complete -F _irida_samples_complete get_irida_sample_files_metadata
