@@ -3,7 +3,7 @@
 # PROJECT_ID is used only for tab completion, not passed to the API
 # ANALYSIS_ID is the actual argument used in the curl call
 #
-# example: get_irida_analysis_results [TAB for project] 13:Slush [TAB again to get the analysis number after selecting a project id] 10295:Reads_QC__5-16-2023_2020-01-3321
+# example: get_irida_analysis_results [TAB for project] 13:Slush [TAB again for the analysis id] 10295:Reads_QC__5-16-2023_2020-01-3321
 #
 # NOTE: tab completion shows all analysis submissions regardless of state.
 # Only completed analyses with output will return results; others return 404.
@@ -11,7 +11,7 @@
 get_irida_analysis_results() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${2}" ]] && { echo "usage: get_irida_analysis_results PROJECT_ID ANALYSIS_ID (you need the second argument, as well)" ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID ANALYSIS_ID (you need the second argument, as well)" ; return 1 ; }
     local state
     state=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.analysisState' )
     [[ -z "${state}" ]] && { echo "analysis ${2%%:*} not found" ; return 1 ; }

@@ -7,10 +7,13 @@
 irida_download_sequence_pair() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing PROJECT_ID)" ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing SAMPLE_ID)" ; return 1 ; }
+    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing PAIR_ID)" ; return 1 ; }
     local sample_id="${2%%:*}"
     local pair_id="${3%%:*}"
     local file_ids
-    file_ids=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg pid "${pair_id}" '.resource.resources[] | select(.identifier == $pid) | .files[].identifier' )
+    file_ids=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg pid "${pair_id}" '.resource.resources[] | select(.identifier == $pid) | .files[].identifier' )
     for file_id in ${file_ids}; do
         irida_download_sequence_file "${1}" "${2}" "${pair_id}" "${file_id}"
     done

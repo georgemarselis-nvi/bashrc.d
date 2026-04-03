@@ -2,11 +2,16 @@
 # PROJECT_ID is used only for tab completion, not passed to the API
 # SAMPLE_ID, PAIR_ID, FILE_ID are used in the curl call
 # filename is taken from the JSON metadata before downloading
-# example: download_irida_sequence_file 2:Test_Data_Uploading 3:sample-1-Added 3 5
+#
+# example: download_irida_sequence_file [TAB once for project id] 2:Test_Data_Uploading [TAB again for sample id] 3:sample-1-Added [TAB again for pair id] 3 [TAB again for file id] 5
 
-download_irida_sequence_file() {
+irida_download_sequence_file() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing PROJECT_ID)" ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing SAMPLE_ID)" ; return 1 ; }
+    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing PAIR_ID)" ; return 1 ; }
+    [[ -z "${4}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing FILE_ID)" ; return 1 ; }
     local sample_id="${2%%:*}"
     local pair_id="${3%%:*}"
     local file_id="${4%%:*}"

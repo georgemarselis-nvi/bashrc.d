@@ -1,6 +1,7 @@
 # get all projects the current user has access to, displayed as a table
-# no arguments needed, no tabbing
 # provides the autocompletion for other get_irida_ functions
+#
+# no arguments needed, no tabbing
 #
 # example: get_irida_projects
 
@@ -9,3 +10,6 @@ get_irida_projects() {
     check_irida_token        || return 1
     /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .name, description: .projectDescription}]' | /usr/bin/mlr --ijson --opprint cat ; 
 }
+
+# disable tab completion as a hint we do not need arguments here
+complete get_irida_projects

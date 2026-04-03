@@ -6,11 +6,12 @@
 # API call. It is used by the user to pick a project and then select the number of the sample.
 # SAMPLE_ID is the actual argument used in the curl call
 #
-# example: get_irida_sample_files_metadata [TAB once to get the project id] 150:Sashimi [TAB again to get the sample id after selecting a project id] 1234:MySample
+# example: get_irida_sample_files_metadata [TAB once for project id] 150:Sashimi [TAB again for sample id] 1234:MySample
 
 get_irida_sample_files_metadata() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (you need the second argument, as well)" ; return 1 ; }
     /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .fileName, label: .label, size: .fileSizeBytes, sha256: .uploadSha256, created: .createdDate, modified: .modifiedDate, path: .file}]' | /usr/bin/mlr --ijson --opprint cat ;
 }
 
