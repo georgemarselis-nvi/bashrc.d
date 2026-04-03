@@ -24,7 +24,7 @@ get_irida_project_metadata() {
     local response
     response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/samples/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     [[ -z "${response}" ]] && { echo "project ${1%%:*} not found" ; return 1 ; }
-    [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "project ${1%%:*} has no samples" ; return 1 }
+    [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "project ${1%%:*} has no samples" ; return 1 ; }
     echo "${response}" | /usr/bin/jq .
 }
 
