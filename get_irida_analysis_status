@@ -33,3 +33,7 @@ get_irida_analysis_status() {
 }
 
 complete -F _irida_analysis_complete get_irida_analysis_status
+
+# NOTE: in the results, "CLEANED" means Galaxy has cleaned up the working files for that analysis run - intermediate files, job directories,
+# temporary data and that the execution environment has been tidied up after the job finished (or errored). It is separate from the analysis state itself.
+# CREATED and MODIFIED are milliseconds from epoch.
