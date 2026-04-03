@@ -67,8 +67,9 @@ get_irida_projects
 
 # get_irida_sample_files_metadata
 get_irida_sample_files_metadata 105:Slush_Sub 7709:Strain0016
+# shoudl get a denied
+get_irida_sample_files_metadata 105:Slush_Sub 1
 get_irida_sample_files_metadata 105:Slush_Sub 999999
-get_irida_sample_files_metadata 105:Slush_Sub no_samples_found
 
 # get_irida_sample_metadata
 get_irida_sample_metadata 105:Slush_Sub 7709:Strain0016
@@ -78,7 +79,8 @@ get_irida_sample_metadata 105:Slush_Sub no_samples_found
 # get_irida_sample_pairs_metadata
 get_irida_sample_pairs_metadata 105:Slush_Sub 8563:2024-01-12313-2-1-1-1
 get_irida_sample_pairs_metadata 105:Slush_Sub 999999
-get_irida_sample_pairs_metadata 105:Slush_Sub no_samples_found
+get_irida_sample_pairs_metadata 105:Slush_Sub 1
+get_irida_sample_pairs_metadata 142           999999
 
 # get_irida_sample_unpaired_metadata
 get_irida_sample_unpaired_metadata 105:Slush_Sub 7709:Strain0016
