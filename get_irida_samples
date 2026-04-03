@@ -1,3 +1,4 @@
+# get_irida_samples
 # gets all the samples in a IRIDA project
 #
 # example: get_irida_samples [TAB once for project id]

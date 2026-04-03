@@ -1,3 +1,4 @@
+# get_irida_analysis_results
 # get single-end (unpaired) sequence file metadata for a sample. Does not download any files.
 #
 # PROJECT_ID is used only for tab completion to narrow down samples, not passed to the API

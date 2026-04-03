@@ -1,7 +1,10 @@
+# download_irida_sequence_file
 # download a paired-end sequence file from a sample
 # PROJECT_ID is used only for tab completion, not passed to the API
 # SAMPLE_ID, PAIR_ID, FILE_ID are used in the curl call
 # filename is taken from the JSON metadata before downloading
+#
+# NOTE: irida_download_sequence_pair downloads both R1 and R2 in one call.
 #
 # example: download_irida_sequence_file [TAB once for project id] 2:Test_Data_Uploading [TAB again for sample id] 3:sample-1-Added [TAB again for pair id] 3 [TAB again for file id] 5
 #

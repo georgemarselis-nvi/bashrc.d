@@ -1,3 +1,4 @@
+# get_irida_token
 # get IRIDA OAuth token and export as IRIDA_TOKEN
 # reads credentials from Bitwarden via bw serve (must be running on 127.0.0.1:8087)
 #

@@ -1,3 +1,4 @@
+# get_irida_analysis_results
 # get full metadata for a single sample
 # PROJECT_ID is used only for tab completion, not passed to the API
 # SAMPLE_ID is the actual argument used in the curl call

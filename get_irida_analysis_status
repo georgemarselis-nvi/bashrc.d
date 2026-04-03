@@ -1,3 +1,4 @@
+# get_irida_analysis_results
 # get the state of an analysis submission
 # PROJECT_ID is used only for tab completion, not passed to the API
 # ANALYSIS_ID is the actual argument used in the curl call
