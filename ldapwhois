@@ -9,6 +9,7 @@
 
 ldapwhois() {
     local user="$1"
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} viXXXX@vet..." ; return 1 ; }
 
     # Ensure user input format
     [[ "$user" != *@* ]] && user="${user}@vetinst.no"
@@ -32,4 +33,9 @@ ldapwhois() {
     ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no "(&(objectClass=user)(userPrincipalName=${user}))" displayName
 }
 
-ldapwho() { ldapwhois "$@"; }
+_ldapwhois_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $(compgen -W "$(ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no "(&(objectClass=user)(userPrincipalName=${cur}*))" userPrincipalName 2>/dev/null | grep '^userPrincipalName:' | awk '{print $2}')" -- "${cur}") )
+}
+
+complete -F _ldapwhois_complete ldapwhois
