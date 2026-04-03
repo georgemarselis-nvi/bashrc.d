@@ -40,17 +40,17 @@ sha512sum --check <<'EOF'
 EOF
 rm -f 24718_128413-bracken_report_file.tsv 24718_128414-formatted_read_qc_output.tsv
 get_irida_analysis_output_files 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1
-get_irida_analysis_output_files 150:test_gmarselis no_analyses_found
+get_irida_analysis_output_files 150:test_gmarselis 999999
 
 # get_irida_analysis_results
 get_irida_analysis_results 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018
 get_irida_analysis_results 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1
-get_irida_analysis_results 150:test_gmarselis no_analyses_found
+get_irida_analysis_results 150:test_gmarselis 999999
 
 # get_irida_analysis_status
 get_irida_analysis_status 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018
 get_irida_analysis_status 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1
-get_irida_analysis_status 105:Slush_Sub no_analyses_found
+get_irida_analysis_status 105:Slush_Sub 999999
 
 # get_irida_project_analyses
 get_irida_project_analyses 105:Slush_Sub
