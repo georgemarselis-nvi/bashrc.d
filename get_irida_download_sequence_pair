@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-irida_download_sequence_pair() {
+get_irida_download_sequence_pair() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
     [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing PROJECT_ID)" ; return 1 ; }
@@ -36,4 +36,4 @@ irida_download_sequence_pair() {
     done
 }
 
-complete -F _irida_download_pair_complete irida_download_sequence_pair
+complete -F _irida_download_pair_complete get_irida_download_sequence_pair
