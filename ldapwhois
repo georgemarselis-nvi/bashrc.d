@@ -1,3 +1,4 @@
+# ldapwhois
 # look up a user's display name in Active Directory via LDAP using Kerberos auth
 # accepts username with or without @vetinst.no suffix
 #
