@@ -1,0 +1,4 @@
+# interactive checklist of files in a directory; defaults to current directory if no argument given
+checklist() {
+    whiptail --checklist "Files of ${1:-.}" 30 60 16 $(ls "${1:-.}" | while read f; do echo "$f \"\" OFF"; done) 3>&1 1>&2 2>&3
+}
