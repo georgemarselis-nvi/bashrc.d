@@ -1,6 +1,23 @@
-# interactive checklist of files in a directory; defaults to current directory if no argument given
-checklist() {
-    whiptail --checklist "Files of ${1:-.}" 30 60 16 $(ls "${1:-.}" | while read f; do echo "$f \"\" OFF"; done) 3>&1 1>&2 2>&3
-}
+CHECKLIST_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/checklist"
 
-complete -A directory checklist
+checklist()
+{
+    local dir="${1:-.}"
+    local state_file="${CHECKLIST_STATE_DIR}/$(echo "$dir" | md5sum | cut -d' ' -f1)"
+
+    mkdir -p "$CHECKLIST_STATE_DIR"
+
+    # build item list: "filename" "label" ON/OFF
+    local items=()
+    while read -r f; do
+        local state="OFF"
+        grep -qxF "$f" "$state_file" 2>/dev/null && state="ON"
+        items+=("$f" "\"\"" "$state")
+    done < <(ls "$dir")
+
+    local result
+    result=$(whiptail --checklist "Files of ${dir}" 30 60 16 "${items[@]}" 3>&1 1>&2 2>&3) || return 1
+
+    # save selected items, one per line
+    echo "$result" | tr ' ' '\n' | tr -d '"' > "$state_file"
+}
