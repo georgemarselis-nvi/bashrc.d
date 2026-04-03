@@ -24,8 +24,12 @@ get_irida_sample_metadata() {
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (you need the second argument, as well)" ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid sample ID: ${2%%:*}" ; return 1 ; }
     local response
-    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.sampleName, label: .resource.label, description: .resource.description, organism: .resource.organism, isolate: .resource.isolate, strain: .resource.strain, collected_by: .resource.collectedBy, collection_date: .resource.collectionDate, location: .resource.geographicLocationName, isolation_source: .resource.isolationSource, latitude: .resource.latitude, longitude: .resource.longitude, created: .resource.createdDate, modified: .resource.modifiedDate}' | /usr/bin/mlr --ijson --opprint cat )
-    [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "sammple ${2%%:*} has no sequence files" ; return 1 }
+    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    [[ -z "${response}" ]] && { echo "sample ${2%%:*} not found" ; return 1 ; }
+    echo "${response}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.sampleName, label: .resource.label, description: .resource.description, organism: .resource.organism, isolate: .resource.isolate, strain: .resource.strain, collected_by: .resource.collectedBy, collection_date: .resource.collectionDate, location: .resource.geographicLocationName, isolation_source: .resource.isolationSource, latitude: .resource.latitude, longitude: .resource.longitude, created: .resource.createdDate, modified: .resource.modifiedDate}' | /usr/bin/mlr --ijson --opprint cat
 }
+
+# NOTE: get_irida_sample_metadata returns a single object not a resources array, so the length check
+# does not apply here. An empty response is sufficient.
 
 complete -F _irida_sample_metadata_complete get_irida_sample_metadata
