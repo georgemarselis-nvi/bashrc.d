@@ -1,3 +1,21 @@
+# check if IRIDA_TOKEN is set in the current shell
+# returns 0 if set, non-zero if not
+# example: check_irida_token && get_irida_projects || echo "no token - run get_irida_token first"
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
 check_irida_token() {
     [[ -n "${IRIDA_TOKEN}" ]] || { echo "no IRIDA token - run get_irida_token first" ; return 1 ; }
 }
