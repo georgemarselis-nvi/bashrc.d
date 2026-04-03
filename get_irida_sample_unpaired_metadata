@@ -23,11 +23,17 @@ get_irida_sample_unpaired_metadata() {
     check_irida_token        || return 1
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (you need the second argument, as well)" ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid sample ID: ${2%%:*}" ; return 1 ; }
+    local http_code
+    http_code=$( /usr/bin/curl --silent -o /dev/null -w "%{http_code}" -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/unpaired" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    [[ "${http_code}" == "404" ]] && { echo "sample ${2%%:*} not found" ; return 1 ; }
     local response
-    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/sequenceFiles/unpaired" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-    [[ -z "${response}" ]] && { echo "sample ${2%%:*} not found" ; return 1 ; }
+    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/unpaired" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "sample ${2%%:*} has no unpaired files" ; return 1 ; }
     echo "${response}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .fileName, size: .fileSizeBytes}]' | /usr/bin/mlr --ijson --opprint cat
 }
 
 complete -F _irida_samples_complete get_irida_sample_unpaired_metadata
+
+# FIXME: /sequenceFiles/unpaired returns 500 - IRIDA routing bug, tries to parse
+# "unpaired" as a Long fileId. correct endpoint unknown. see catalina.out for stack trace.
+# /unpaired also fails. needs investigation against API docs or IRIDA source.
