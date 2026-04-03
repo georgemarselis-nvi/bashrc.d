@@ -1,4 +1,4 @@
-# get outputs of a completed analysis in a project
+# get the outputs of a *completed* analysis in a project
 #
 # PROJECT_ID is used only for tab completion, not passed to the API
 # ANALYSIS_ID is the actual argument used in the curl call
@@ -11,6 +11,7 @@
 get_irida_analysis_results() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
+    [[ -z "${2}" ]] && { echo "usage: get_irida_analysis_results PROJECT_ID ANALYSIS_ID (you need the second argument, as well)" ; return 1 ; }
     local state
     state=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.analysisState' )
     [[ -z "${state}" ]] && { echo "analysis ${2%%:*} not found" ; return 1 ; }
