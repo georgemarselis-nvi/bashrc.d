@@ -17,7 +17,7 @@ get_irida_analysis_output_files() {
     while IFS= read -r url; do
         local filename
         filename=$( echo "${response}" | /usr/bin/jq -r --arg url "${url}" --arg pid "${2%%:*}" '.resource.links[] | select(.href == $url) | "\($pid)_\(.href | split("/") | last)-\(.rel | ltrimstr("outputFile/"))"' ) 
-        /usr/bin/curl --silent -X GET "${url}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -o "${filename}"
+        /usr/bin/curl --silent -X GET "${url}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -o "${filename}" -H "Accept: text/plain" -o "${filename}"
         echo "downloaded: ${filename}"
     done <<< "${urls}"
 }
