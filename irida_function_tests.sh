@@ -34,6 +34,11 @@ check_irida_token ; unset IRIDA_TOKEN ; check_irida_token ; get_irida_token; ech
 
 # get_irida_analysis_output_files
 get_irida_analysis_output_files 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018
+sha512sum --check <<'EOF'
+03419415072af437fc0fa60141d157e5077283f91493d00bdc4ec9f1e90aead36e2483ca548f924a3171c57a5bec6d486f769b528683c1d08e0c1cce7b713d6d  24718_128413-bracken_report_file.tsv
+9a51d8e4523aa076fd29a3a9715d1ed6b005c776dd562cade43b733fc315230db865e6b0aa2615bf239ec16518b63986fbc9ab0a275d198978a072a97e3f17db  24718_128414-formatted_read_qc_output.tsv
+EOF
+rm -f 24718_128413-bracken_report_file.tsv 24718_128414-formatted_read_qc_output.tsv
 get_irida_analysis_output_files 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1
 get_irida_analysis_output_files 150:test_gmarselis no_analyses_found
 
