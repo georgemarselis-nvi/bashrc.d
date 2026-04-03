@@ -8,6 +8,7 @@ get_irida_sample_metadata() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (you need the second argument, as well)" ; return 1 ; }
+    [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid sample ID: ${2%%:*}" ; return 1 ; }
     /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.sampleName, label: .resource.label, description: .resource.description, organism: .resource.organism, isolate: .resource.isolate, strain: .resource.strain, collected_by: .resource.collectedBy, collection_date: .resource.collectionDate, location: .resource.geographicLocationName, isolation_source: .resource.isolationSource, latitude: .resource.latitude, longitude: .resource.longitude, created: .resource.createdDate, modified: .resource.modifiedDate}' | /usr/bin/mlr --ijson --opprint cat
 }
 

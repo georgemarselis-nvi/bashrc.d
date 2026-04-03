@@ -8,6 +8,7 @@ get_irida_analysis_output_files() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID ANALYSIS_ID (you need the second argument, as well)" ; return 1 ; }
+    [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid analysis ID: ${2%%:*}" ; return 1 ; }
     local response
     response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     [[ -z "${response}" ]] && { echo "no results returned - analysis may not be completed or may have no output files" ; return 1 ; }
