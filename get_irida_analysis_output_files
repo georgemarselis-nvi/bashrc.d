@@ -23,16 +23,20 @@ get_irida_analysis_output_files() {
     check_irida_token        || return 1
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID ANALYSIS_ID (you need the second argument, as well)" ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid analysis ID: ${2%%:*}" ; return 1 ; }
+    local state
+    state=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.analysisState' )
+    [[ -z "${state}" ]] && { echo "analysis ${2%%:*} not found" ; return 1 ; }
+    [[ "${state}" != "COMPLETED" ]] && { echo "analysis ${2%%:*} is ${state}, not COMPLETED" ; return 1 ; }
     local response
     response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-    [[ -z "${response}" ]] && { echo "no results returned - analysis may not be completed or may have no output files" ; return 1 ; }
+    [[ -z "${response}" ]] && { echo "analysis ${2%%:*} completed but has no output files" ; return 1 ; }
     local urls
     urls=$( echo "${response}" | /usr/bin/jq -r '.resource.links[] | select(.rel | startswith("outputFile")) | .href' )
     [[ -z "${urls}" ]] && { echo "no output files found for analysis ${2%%:*}" ; return 1 ; }
     while IFS= read -r url; do
         local filename
-        filename=$( echo "${response}" | /usr/bin/jq -r --arg url "${url}" --arg pid "${2%%:*}" '.resource.links[] | select(.href == $url) | "\($pid)_\(.href | split("/") | last)-\(.rel | ltrimstr("outputFile/"))"' ) 
-        /usr/bin/curl --silent -X GET "${url}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -o "${filename}" -H "Accept: text/plain" -o "${filename}"
+        filename=$( echo "${response}" | /usr/bin/jq -r --arg url "${url}" --arg pid "${2%%:*}" '.resource.links[] | select(.href == $url) | "\($pid)_\(.href | split("/") | last)-\(.rel | ltrimstr("outputFile/"))"' )
+        /usr/bin/curl --silent -X GET "${url}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: text/plain" -o "${filename}"
         echo "downloaded: ${filename}"
     done <<< "${urls}"
 }

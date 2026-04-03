@@ -25,7 +25,7 @@ _irida_samples_complete() {
         local samples
         samples=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"' 2>/dev/null )
         if [[ -z "${samples}" ]]; then
-            COMPREPLY=( "no_samples_found" )
+            COMPREPLY=( $(compgen -W "no_samples_found" -- "${COMP_WORDS[COMP_CWORD]}") )
         else
             COMPREPLY=($(compgen -W "${samples}" -- "${COMP_WORDS[COMP_CWORD]}"))
         fi
