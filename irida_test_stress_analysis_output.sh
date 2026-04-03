@@ -24,4 +24,5 @@ for id in 10257 10258 10259 10260 10261 10262 10263 10264 10265 10266 10267 1026
     get_irida_analysis_output_files 13:Slush ${id}
     sleep 1
 done
-rm -f ./*.tsv
+# delete any file in the projectid_sampleid-* format
+rm -f ./[0-9]*_[0-9]*-*
