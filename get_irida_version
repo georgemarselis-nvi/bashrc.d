@@ -1,0 +1,26 @@
+# get_irida_version
+# get the IRIDA server version string
+#
+# example: get_irida_version
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+get_irida_version() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/version" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.version'
+}
+
+complete get_irida_version
