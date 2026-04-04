@@ -1,5 +1,6 @@
+# check_irida_connectivity
 # check if IRIDA server is reachable
-# returns 0 if reachable, non-zero if not
+#   returns 0 if reachable, non-zero if not
 #
 # example: check_irida_connectivity && get_irida_token || echo "IRIDA unreachable"
 #
@@ -21,3 +22,8 @@ check_irida_connectivity() {
     [[ $- == *i* ]] || return 0
     /usr/bin/curl --silent --connect-timeout 1 --max-time 1 "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api" -o /dev/null -w "%{http_code}" | grep -q "401" || { echo "IRIDA unreachable" ; return 1 ; }
 }
+
+# WARNING: check_irida_connectivity will false-negative while get_irida_analysis_submissions_by_type
+# is in flight. IRIDA uwsgi workers block on synchronous Galaxy API calls and become unavailable
+# to serve the connectivity check. IRIDA is alive but unresponsive. Wait for the Galaxy query
+# to complete before running any other IRIDA functions.
