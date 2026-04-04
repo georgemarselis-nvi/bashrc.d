@@ -30,7 +30,7 @@ get_irida_analysis_status() {
     local response
     response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     [[ -z "${response}" ]] && { echo "analysis ${2%%:*} not found" ; return 1 ; }
-    echo "${response}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.label, state: .resource.analysisState, cleaned: .resource.analysisCleanedState, created: .resource.createdDate, modified: .resource.modifiedDate}' | /usr/bin/mlr --ijson --opprint cat
+    echo "${response}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.label, state: .resource.analysisState, cleaned: .resource.analysisCleanedState, priority: .resource.priority, workflow: .resource.workflowId, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.resource.modifiedDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat
 }
 
 complete -F _irida_analysis_complete get_irida_analysis_status
