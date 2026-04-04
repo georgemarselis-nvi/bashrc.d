@@ -35,3 +35,7 @@ get_irida_sample_files_metadata() {
 }
 
 complete -F _irida_samples_complete get_irida_sample_files_metadata
+
+# NOTE: /api/samples/{id}/sequenceFiles returns both paired and unpaired files but does not
+# surface the pair identifier. To get the pair_id needed for get_irida_download_sequence_file,
+# call get_irida_sample_pairs_metadata separately.
