@@ -37,6 +37,8 @@ get_irida_analysis_output_files() {
     while IFS= read -r url; do
         local filename
         filename=$( echo "${response}" | /usr/bin/jq -r --arg url "${url}" --arg pid "${2%%:*}" '.resource.links[] | select(.href == $url) | "\($pid)_\(.href | split("/") | last)-\(.rel | ltrimstr("outputFile/"))"' )
+        # NOTE: IRIDA ignores the Accept header for analysis output files and always returns text/plain.
+        # The Accept: text/plain header is kept for clarity but has no effect on the response.
         /usr/bin/curl --silent -X GET "${url}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: text/plain" -o "${filename}"
         echo "downloaded: ${filename}"
     done <<< "${urls}"
