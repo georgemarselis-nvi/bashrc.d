@@ -1,0 +1,325 @@
+0
+0
+0
+no IRIDA token - run get_irida_token first
+eyJ4NXQjUzI1NiI6ImFENGtrWEhxQzgzOVUxaklBNmQxVFMySWxNTmdkYmEwNWdQNEE4X2lQaW8iLCJraWQiOiJqd2siLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJnbWFyc2VsaXMiLCJhdWQiOiJ0ZXN0X2NsaWVudF9mb3JfZmlsZV9kb3dubG9hZF93ZWJjYXJ0IiwibmJmIjoxNzc1MzkyMDYzLCJzY29wZSI6WyJyZWFkIiwid3JpdGUiXSwiaXNzIjoiaHR0cDovL2lyaWRhLnZpZ2FzcC52ZXRpbnN0Lm5vOjgwODAvaXJpZGEtMjEuMDkuMiIsImV4cCI6MTc3NTU2NDg2MywiaWF0IjoxNzc1MzkyMDYzLCJhdXRob3JpdGllcyI6WyJTQ09QRV93cml0ZSIsIlJPTEVfVVNFUiIsIlNDT1BFX3JlYWQiXX0.Ll8S6wyxk9YQtDKCJpBi7y_AtQdPhVXW9X-h9ZCDDrMb6meOREbvxwPMLfAzTT89TChmLMStpuRNtvtj6_s9DvX7rnVoexGmWWs2NMW1fI7tfGVwDj6Kjh_PDRKFmHj9G2PHVk8dOU_jU4netSSrqDFsAyOXbMaCmqqIP_sp4mV8CRnfiIwb39yyAMsLLone369Sfs-k1b8tXw0WvwwXYLyiU5WpIFTOobhwCrV41mFPhOP7HdUeXGn1jwtqBKjwLbnCSou7k894S3o8lqOqvPltCEBTDX_d-FJQn0MYYZOexKxQPBv4zjGbTu8rZ9egPixIelYtFcbq0elsoqNvCA
+irida-23.01.3
+0
+id  name                 description                                                              organism
+2   Test_Data_Uploading  -                                                                        Salmonella enterica
+13  Slush                Parent project for uncertain species samples                             -
+58  Controls             Samples used as "Control" during sequences                               -
+105 Slush_Sub            -                                                                        -
+150 test_gmarselis       test project on how to upload data to irida, for the webcart karin wants georgium marselium
+151 NIRD_only_eukaryote  NIRD-only storage project for eukaryote samples. Not uploaded to VIGASP. Eukaryota 
+152 shotgun              NIRD-only storage project for shotgun samples. Not uploaded to VIGASP.   -
+153 Amplicon             NIRD-only storage project for amplicon samples. Not uploaded to VIGASP.  -
+id  name      description organism genome_size min_coverage max_coverage created    modified
+105 Slush_Sub -           -        null        null         null         2024-10-07 2026-04-01
+project 999999999 not found
+usage: get_irida_project PROJECT_ID
+id username  first_name     last_name     email                                 phone       role       enabled created    modified
+1  admin     Administrator  Administrator admin@example.org                     867-5309    ROLE_ADMIN true    2021-12-30 2021-12-30
+2  jeevka    Jeevan Karloss Antony Samy   jeevan.karloss.antony-samy@vetinst.no +4799881889 ROLE_USER  true    2021-12-30 2026-02-11
+3  karinlag  Karin          Lagesen       karin.lagesen@vetinst.no              91575916    ROLE_USER  true    2022-01-03 2022-01-03
+24 trishangu Trishang       Udhwani       trishang.udhwani@vetinst.no           93932978    ROLE_USER  true    2023-08-03 2023-08-03
+46 gmarselis George         Marselis      george.marselis@vetinst.no            41359327    ROLE_USER  true    2026-03-22 2026-04-01
+project 999999999 not found
+usage: get_irida_project_users PROJECT_ID
+{
+  "resource": {
+    "resources": [
+      {
+        "metadata": {
+          "Reads_QC/Coverage": {
+            "value": "109",
+            "type": "text"
+          },
+          "Reads_QC/ReadLength": {
+            "value": "251",
+            "type": "text"
+          },
+          "mlst/sequence_type": {
+            "value": "335",
+            "type": "text"
+          },
+          "Reads_QC/SpeciesName": {
+            "value": "Escherichia-coli",
+            "type": "text"
+          },
+          "mlst/scheme": {
+            "value": "ecoli",
+            "type": "text"
+          },
+          "Reads_QC/ProportionOfMappedReads": {
+            "value": "98.39",
+            "type": "text"
+          },
+          "Reads_QC/Mean-PhredScore": {
+            "value": "34.81",
+            "type": "text"
+          },
+          "Reads_QC/GC-Content": {
+            "value": "50.5",
+            "type": "text"
+          }
+        },
+        "links": [
+          {
+            "rel": "self",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/metadata"
+          },
+          {
+            "rel": "sample",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "Reads_QC/Coverage": {
+            "value": "145",
+            "type": "text"
+          },
+          "Reads_QC/ReadLength": {
+            "value": "151",
+            "type": "text"
+          },
+          "mlst/sequence_type": {
+            "value": "335",
+            "type": "text"
+          },
+          "Reads_QC/SpeciesName": {
+            "value": "Escherichia-coli",
+            "type": "text"
+          },
+          "mlst/scheme": {
+            "value": "ecoli",
+            "type": "text"
+          },
+          "Reads_QC/ProportionOfMappedReads": {
+            "value": "98.49",
+            "type": "text"
+          },
+          "Reads_QC/GC-Content": {
+            "value": "52.0",
+            "type": "text"
+          },
+          "Reads_QC/Mean-PhredScore": {
+            "value": "32.84",
+            "type": "text"
+          }
+        },
+        "links": [
+          {
+            "rel": "self",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7710/metadata"
+          },
+          {
+            "rel": "sample",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7710"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "Reads_QC/Coverage": {
+            "value": "14",
+            "type": "text"
+          },
+          "Reads_QC/ReadLength": {
+            "value": "151",
+            "type": "text"
+          },
+          "mlst/sequence_type": {
+            "value": "335",
+            "type": "text"
+          },
+          "Reads_QC/SpeciesName": {
+            "value": "Escherichia-coli",
+            "type": "text"
+          },
+          "mlst/scheme": {
+            "value": "ecoli",
+            "type": "text"
+          },
+          "Reads_QC/ProportionOfMappedReads": {
+            "value": "98.24",
+            "type": "text"
+          },
+          "Reads_QC/GC-Content": {
+            "value": "52.0",
+            "type": "text"
+          },
+          "Reads_QC/Mean-PhredScore": {
+            "value": "32.18",
+            "type": "text"
+          }
+        },
+        "links": [
+          {
+            "rel": "self",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7712/metadata"
+          },
+          {
+            "rel": "sample",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7712"
+          }
+        ]
+      },
+      {
+        "metadata": {},
+        "links": [
+          {
+            "rel": "self",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/metadata"
+          },
+          {
+            "rel": "sample",
+            "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563"
+          }
+        ]
+      }
+    ],
+    "links": [
+      {
+        "rel": "self",
+        "href": "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/samples/metadata"
+      }
+    ]
+  }
+}
+project 999999999 not found
+usage: get_irida_project_metadata PROJECT_ID (you need the first argument)
+id    name                                         state     cleaned priority workflow                             created    modified
+47713 Assembly_QC__5-6-2025_2024-01-12313-2-1-1-1  ERROR     CLEANED MEDIUM   fdada4ed-7f76-45ee-89cf-fea9a9e2f2d0 2025-05-06 2025-05-20
+24717 Reads_QC__10-7-2024_Strain0018               COMPLETED CLEANED MEDIUM   a2810448-fd9b-4965-ac2e-0c12225229c1 2024-10-07 2024-10-21
+42215 Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1  ERROR     CLEANED MEDIUM   fdada4ed-7f76-45ee-89cf-fea9a9e2f2d0 2025-02-03 2025-02-17
+42216 Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1  ERROR     CLEANED MEDIUM   fdada4ed-7f76-45ee-89cf-fea9a9e2f2d0 2025-02-03 2025-02-17
+24736 Reads_QC__10-8-2024_Strain0016               COMPLETED CLEANED MEDIUM   a2810448-fd9b-4965-ac2e-0c12225229c1 2024-10-08 2024-10-22
+24718 Reads_QC__10-7-2024_Strain0018               COMPLETED CLEANED MEDIUM   a2810448-fd9b-4965-ac2e-0c12225229c1 2024-10-07 2024-10-21
+24734 Reads_QC__10-8-2024_Strain0018               COMPLETED CLEANED MEDIUM   a2810448-fd9b-4965-ac2e-0c12225229c1 2024-10-08 2024-10-22
+42217 Assembly_QC__2-3-2025_2024-01-12548-26-1-1-1 ERROR     CLEANED MEDIUM   fdada4ed-7f76-45ee-89cf-fea9a9e2f2d0 2025-02-03 2025-02-17
+project 150 has no analyses
+project 999999999 not found
+usage: get_irida_project_analyses PROJECT_ID (you need the first argument)
+id   name                  description organism isolate strain collected_by collection_date location isolation_source latitude longitude created    modified
+7709 Strain0016            -           null     null    null   null         null            null     null             null     null      2024-10-01 2024-12-20
+7710 Strain0018            -           null     null    null   null         null            null     null             null     null      2024-10-01 2024-12-20
+7712 Strain0020            -           null     null    null   null         null            null     null             null     null      2024-10-01 2024-10-07
+8563 2024-01-12313-2-1-1-1 -           null     null    null   null         null            null     null             null     null      2025-01-23 2025-05-06
+project 150 has no samples
+project 999999999 not found or no access
+usage: get_irida_samples PROJECT_ID (you need the first argument)
+id   name       label      description organism isolate strain collected_by collection_date location isolation_source latitude longitude created    modified
+7709 Strain0016 Strain0016 -           null     null    null   null         null            null     null             null     null      2024-10-01 2024-12-20
+sample 999999999 not found
+usage: get_irida_sample_metadata PROJECT_ID SAMPLE_ID (you need the second argument, as well)
+id    name                               label                              size      sha256                                                           r1   r1_id r1_size r1_sha256 r2   r2_id r2_size r2_sha256 created    modified
+16128 2024_EQA13.Strain0016_R1_001.fastq 2024_EQA13.Strain0016_R1_001.fastq 597501873 c30b2d948c65f80ebfc4a2b4dd823f22d08cce2c9f64e5469c4019d6af046bc3 null null  null    null      null null  null    null      2024-10-01 2025-02-11
+16129 2024_EQA13.Strain0016_R2_001.fastq 2024_EQA13.Strain0016_R2_001.fastq 597813219 89d07eb748526111474fab64595604d161fe91ebcd372a517fcf0dfef6b63583 null null  null    null      null null  null    null      2024-10-01 2025-02-11
+sample 999999999 not found
+usage: get_irida_sample_files_metadata PROJECT_ID SAMPLE_ID (you need the second argument, as well)
+id   r1                                                   r1_id r1_size   r1_sha256                                                        r2                                                   r2_id r2_size   r2_sha256                                                        created
+8980 250109_M09180.2024-01-12313-2-1-1-1_S41_R1_001.fastq 17899 289229507 8fedae476e21387d5bbf63dd1d418597acd2ac9b8d38f41383715be2d68108f4 250109_M09180.2024-01-12313-2-1-1-1_S41_R2_001.fastq 17900 289229507 b37587b846833b571666b09747a86cad4f8b3ec21d857efb37ad2deb884415ab 2025-01-23
+sample 999999999 not found
+usage: get_irida_sample_pairs_metadata PROJECT_ID SAMPLE_ID (you need the second argument, as well)
+sample 7709 has no unpaired files
+sample 8563 has no unpaired files
+sample 999999999 not found
+usage: get_irida_sample_unpaired_metadata PROJECT_ID SAMPLE_ID (you need the second argument, as well)
+id   name          label                    size    revision path                                          created
+1206 contigs.fasta Strain0016-contigs.fasta 5479350 1        /opt/irida/data/output/128190/0/contigs.fasta 2024-10-01
+sample 999999999 not found
+usage: get_irida_sample_assemblies_metadata PROJECT_ID SAMPLE_ID (you need the second argument, as well)
+id    name                           state     cleaned priority workflow                             created    modified
+24718 Reads_QC__10-7-2024_Strain0018 COMPLETED CLEANED MEDIUM   a2810448-fd9b-4965-ac2e-0c12225229c1 2024-10-07 2024-10-21
+id    name                                        state cleaned priority workflow                             created    modified
+42216 Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1 ERROR CLEANED MEDIUM   fdada4ed-7f76-45ee-89cf-fea9a9e2f2d0 2025-02-03 2025-02-17
+analysis 999999999 not found
+usage: get_irida_analysis_status PROJECT_ID ANALYSIS_ID (you need the second argument, as well)
+id    analysis_type execution_id     created    output_files.1.file     output_files.1.url                                                                                   output_files.2.file          output_files.2.url
+34622 Reads_QC      51905535ae9e3a01 2024-10-07 bracken_report_file.tsv http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/24718/analysis/file/128413 formatted_read_qc_output.tsv http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/24718/analysis/file/128414
+analysis 42216 is ERROR, not COMPLETED
+analysis 999999999 not found
+usage: get_irida_analysis_results PROJECT_ID ANALYSIS_ID (you need the second argument, as well)
+downloaded: 24718_128413-bracken_report_file.tsv
+downloaded: 24718_128414-formatted_read_qc_output.tsv
+analysis 42216 is ERROR, not COMPLETED
+analysis 999999999 not found
+usage: get_irida_analysis_output_files PROJECT_ID ANALYSIS_ID (you need the second argument, as well)
+Downloaded: 250109_M09180.2024-01-12313-2-1-1-1_S41_R1_001.fastq
+file 999999999 not found in pair 8980 for sample 8563
+file 17899 not found in pair 8980 for sample 999999999
+usage: get_irida_download_sequence_file PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing SAMPLE_ID)
+Downloaded: 250109_M09180.2024-01-12313-2-1-1-1_S41_R1_001.fastq
+Downloaded: 250109_M09180.2024-01-12313-2-1-1-1_S41_R2_001.fastq
+pair 999999999 not found for sample 8563
+pair 8980 not found for sample 999999999
+usage: get_irida_download_sequence_pair PROJECT_ID SAMPLE_ID PAIR_ID (missing SAMPLE_ID)
+  fetching projects for users... |  (1/45)  fetching projects for users... /  (2/45)  fetching projects for users... -  (3/45)  fetching projects for users... \  (4/45)  fetching projects for users... |  (5/45)  fetching projects for users... /  (6/45)  fetching projects for users... -  (7/45)  fetching projects for users... \  (8/45)  fetching projects for users... |  (9/45)  fetching projects for users... /  (10/45)  fetching projects for users... -  (11/45)  fetching projects for users... \  (12/45)  fetching projects for users... |  (13/45)  fetching projects for users... /  (14/45)  fetching projects for users... -  (15/45)  fetching projects for users... \  (16/45)  fetching projects for users... |  (17/45)  fetching projects for users... /  (18/45)  fetching projects for users... -  (19/45)  fetching projects for users... \  (20/45)  fetching projects for users... |  (21/45)  fetching projects for users... /  (22/45)  fetching projects for users... -  (23/45)  fetching projects for users... \  (24/45)  fetching projects for users... |  (25/45)  fetching projects for users... /  (26/45)  fetching projects for users... -  (27/45)  fetching projects for users... \  (28/45)  fetching projects for users... |  (29/45)  fetching projects for users... /  (30/45)  fetching projects for users... -  (31/45)  fetching projects for users... \  (32/45)  fetching projects for users... |  (33/45)  fetching projects for users... /  (34/45)  fetching projects for users... -  (35/45)  fetching projects for users... \  (36/45)  fetching projects for users... |  (37/45)  fetching projects for users... /  (38/45)  fetching projects for users... -  (39/45)  fetching projects for users... \  (40/45)  fetching projects for users... |  (41/45)  fetching projects for users... /  (42/45)  fetching projects for users... -  (43/45)  fetching projects for users... \  (44/45)  fetching projects for users... |  (45/45)                                                            id username firstname      lastname      email                                 phone       role       enabled locale label                       created    modified   projects
+1  admin    Administrator  Administrator admin@example.org                     867-5309    ROLE_ADMIN true    en     Administrator Administrator 2021-12-30 2021-12-30 Project_1, Listeria spp, Flavobacterium spp, Providencia spp, Campylobacter spp, Staphylococcus spp, Aeromonas spp, Pasteurella spp, Tenacibaculum spp, Klebsiella spp, Enterococcus spp, Mycobacterium spp, Clostridium spp, Actinobacillus spp, Treponema spp, Yersinia spp, Streptococcus spp, Acinetobacter spp, Pseudomonas spp, Brachyspira spp, MiSeq_NextSeq, Influenza A virus, Hafnia spp, Salmonella spp, Controls, Test_ResPointFinder, Renibacterium spp, Test_ALPCA_Simulated_SalmonellaEnterica, OLD_Data_2014_Test, Test_ALPCA_Listeria, Color Magic, Saprolegnia, Enterobacter spp, Temporary_Project_for_OLD_Ecoli_Data, Aliivibrio spp , Validation_spaTyper, Hafnia_PostiveControl, Validation_SerotypeFinder_Ecoli, Test_Meta_Data_Access_Control, Pantoea spp, Escherichia spp, Endozoicomonas spp, Phocoenobacter spp, Moritella spp, Slush, Test_VIGASP_Ecoli, Test_VIGASP_Salmonella, Test_VIGASP_Listeria, Test_VIGASP_Campy, Test_VIGASP_Kleb, Slush_Sub, Piscirikettsia spp, Vibrio anguillarum, Listeria_Senja-Lab customer February2025, VIGAS_Training_June2025_Main, VIGAS_Training_June2025_Sub, Bacillus spp, NIRD_only_eukaryote , shotgun, Amplicon, Clostridium spp, Actinobacillus spp, Treponema spp, Yersinia spp
+2  jeevka   Jeevan Karloss Antony Samy   jeevan.karloss.antony-samy@vetinst.no +4799881889 ROLE_USER  true    en     Jeevan Karloss Antony Samy  2021-12-30 2026-02-11 Test_Data_Uploading, Salmonella spp, Listeria spp, Shared_Data, Moritella spp, Escherichia spp, Slush, Flavobacterium spp, Providencia spp, Campylobacter spp, Staphylococcus spp, Aeromonas spp, Pasteurella spp, Tenacibaculum spp, Klebsiella spp, Enterococcus spp, Mycobacterium spp, Clostridium spp, Treponema spp, Yersinia spp, Streptococcus spp, Acinetobacter spp, Pseudomonas spp, Brachyspira spp, Listeria monocytogenes i rakfisk 2021, MiSeq_NextSeq, NORMVET_escherichiacoli, Influenza A virus, Phocoenobacter spp, Hafnia spp, Controls, Renibacterium spp, sta_faar_eus, Test_ALPCA_Simulated_SalmonellaEnterica, OLD_Data_2014_Test, Test_ALPCA_Listeria, Saprolegnia, Enterobacter spp, Validation_SerotypeFinder_Ecoli, Aliivibrio spp , Validation_spaTyper, Hafnia_PostiveControl, Test_Meta_Data_Access_Control, Pantoea spp, Endozoicomonas spp, Actinobacillus spp, Slush_Sub, Piscirikettsia spp, Listeria_Senja-Lab customer February2025, Vibrio anguillarum, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, NORMVET_staphylococcus, Hund_ESBL_NVI_Normvet, Bacillus spp, Clostridium spp, Actinobacillus spp, Treponema spp, Yersinia spp
+3  karinlag Karin          Lagesen       karin.lagesen@vetinst.no              91575916    ROLE_USER  true    en     Karin Lagesen               2022-01-03 2022-01-03 Listeria spp, Salmonella spp, Moritella spp, Test_Data_Uploading, Listeria monocytogenes i rakfisk 2021, Escherichia spp, Slush, Flavobacterium spp, Providencia spp, Campylobacter spp, Staphylococcus spp, Aeromonas spp, Pasteurella spp, Tenacibaculum spp, Klebsiella spp, Enterococcus spp, Mycobacterium spp, Clostridium spp, Streptococcus spp, Acinetobacter spp, Pseudomonas spp, Brachyspira spp, MiSeq_NextSeq, Yersinia spp, NORMVET_escherichiacoli, Influenza A virus, TestSharing, Phocoenobacter spp, Hafnia spp, Renibacterium spp, Color Magic, Saprolegnia, Enterobacter spp, Treponema spp, Aliivibrio spp , Hafnia_PostiveControl, Validation_SerotypeFinder_Ecoli, Pantoea spp, 41504-AMR-TERRA, Endozoicomonas spp, Actinobacillus spp, Slush_Sub, Piscirikettsia spp, Listeria_Senja-Lab customer February2025, Vibrio anguillarum, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, Bacillus spp, Clostridium spp, Actinobacillus spp, Treponema spp, Yersinia spp
+4  camilsek Camilla         Sekse        camilla.sekse@vetinst.no              92456888    ROLE_USER  true    en     Camilla  Sekse              2022-01-19 2022-04-11 Salmonella spp, test_project, Escherichia spp, Slush, Moritella spp, Flavobacterium spp, Providencia spp, Campylobacter spp, Staphylococcus spp, Aeromonas spp, Pasteurella spp, Tenacibaculum spp, Klebsiella spp, Enterococcus spp, Mycobacterium spp, Clostridium spp, Streptococcus spp, Acinetobacter spp, Pseudomonas spp, Brachyspira spp, MiSeq_NextSeq, Yersinia spp, Influenza A virus, Listeria spp, NRL_AMR_escherichiacoli, MLST_validation_Data, Phocoenobacter spp, Hafnia spp, EDEC2021, sta_faar_eus, Renibacterium spp, Salmonella_Typhimurium-2018-2021-collaboration_NIPH, EQA-12-STEC-2023, Enterobacter spp, Treponema spp, STEC-PT38_2023, Validation_SerotypeFinder_Ecoli, EURL-Salmonella_PT_Typing_2023, APEC_NMBU_2022-2023, Aliivibrio spp , Actinobacillus spp, APEC_konsumegg, Avian pathogenic Escherichia coli, Pantoea spp, Endozoicomonas spp, APEC_all, PAHW_SOA8_indicator_Ecoli, EQA-13-STEC-2024, PT41-EURL-STEC, APEC-Animalia_overvaakning, PAHW_SOA8_Saureus, PAHW_SOA8_APEC, EURL-Salmonella_PT_Typing_2024, Piscirikettsia spp, PAHW_SOA8_Strepuberis, Strep_agalactiae_TINE, Salmonella_Enteritidis_poultry_2025, PAHW_SOA8_Ecoli_pig, Vibrio anguillarum, PAHW_SOA8_APP, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, 31218-INIKA-AM-Salmonella, 31218-INIKA-AM-Escherichia, 31218-INIKA-AM-Klebsiella, 31218-INIKA-MMJ-Escherichia, 31218-INIKA-ELM-Klebsiella, 31218-INIKA-ELM-Escherichia, Masterstudenter Ane og Hedda, Bacillus spp, Clostridium spp, Actinobacillus spp, Treponema spp, Yersinia spp
+
+id username       firstname lastname email                    phone    role       enabled locale label         created    modified
+5  karinlag_admin Karin     Lagesen  karinlag_admin@vigasp.no 91575916 ROLE_ADMIN true    en     Karin Lagesen 2022-01-20 2025-11-10
+
+id username firstname     lastname    email                               phone    role      enabled locale label                     created    modified   projects
+6  janslet  Jannice Schau  Slettemeås jannice.schau-slettemeas@vetinst.no 99390829 ROLE_USER true    en     Jannice Schau  Slettemeås 2022-01-25 2022-01-25 Escherichia spp, Moritella spp, Flavobacterium spp, Providencia spp, Campylobacter spp, Salmonella spp, Staphylococcus spp, Pasteurella spp, Mycobacterium spp, Clostridium spp, Streptococcus spp, Acinetobacter spp, Brachyspira spp, NORMVET_escherichiacoli, EURL-AR_EQAS_ecoli, EURL-AR_EQAS_salmonella, PT_genomic_ecoli, PT_genomic_salmonella, PT_genomic_campylobacter, NORMVET_enterococcus, Enterococcus spp, NORMVET_salmonella, NRL_AMR_escherichiacoli, Influenza A virus, Listeria spp, Phocoenobacter spp, PT_genomic_enterococcus, PT_genomic_staphylococcus, NRL_AMR_staphylococcus, Hafnia spp, STEC_testing_ALPACCA_2022, EURL-AR_EQAS_staphylococcus, NORMVET_staphylococcus, Renibacterium spp, NORMVET_campylobacter, NORMVET_pseudomonas, Pseudomonas spp, OLD_Data_2014_Test, 12010_AMR_SKJELL, Enterobacter spp, Treponema spp, NRL_AMR_salmonella, Aliivibrio spp , Slush, Validation_spaTyper, Validation_SerotypeFinder_Ecoli, Avian pathogenic Escherichia coli, Pantoea spp, verification_RPF3, 41504-AMR-TERRA, 23011_Animalia_AMR, Endozoicomonas spp, Klebsiella spp, Actinobacillus spp, Yersinia spp, Tenacibaculum spp, Aeromonas spp, PAHW_SOA8_indicator_Ecoli, NORMVET_enterobacter, PAHW_SOA8_Saureus, PAHW_SOA8_APEC, Piscirikettsia spp, PAHW_SOA8_Strepuberis, 12010_33J_ESBL_fjorfe, QRECrisk, ESBL_Hast, PAHW_SOA8_Ecoli_pig, 12010_33i_MSSA_Hest, test-metadata-jasc, Hund_ESBL_NVI_Normvet, APEC_all, 2025_ST-1-3_str-uberis, PAHW_SOA8_APP, 34073-ICONIC-VREonly, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, 34073-ICONIC-60efm, MRSA hest, 31218-INIKA-AM-Escherichia, 31218-INIKA-AM-Klebsiella, 31218-INIKA-AM-Salmonella, 31218-INIKA-ELM-Escherichia, 31218-INIKA-ELM-Klebsiella, 31218-INIKA-MMJ-Escherichia, 31218-INIKA-MMJ-Klebsiella, PT_genomic_klebsiella, Bacillus spp
+7  tonefag  Tone Mathisen Fagereng    tone.mathisen-fagereng@vetinst.no   41653517 ROLE_USER true    en     Tone Mathisen Fagereng    2022-02-01 2022-02-01 Listeria monocytogenes i rakfisk 2021, Listeria spp
+
+id username    firstname lastname   email                     phone    role      enabled locale label             created    modified
+8  aobstfelder Andrea    Obstfelder andrea.obstfelder@nmbu.no 91557166 ROLE_USER true    en     Andrea Obstfelder 2022-02-07 2022-02-09
+
+id username      firstname              lastname    email                                      phone      role      enabled locale label                            created    modified   projects
+9  ksveinsson    Karoline               Sveinsson   karoline.sveinsson@vetinst.no              91725161   ROLE_USER true    en     Karoline  Sveinsson              2022-03-22 2022-04-22 Moritella spp
+10 snorregu      Snorre                 Gulla       snorre.gulla@vetinst.no                    40829338   ROLE_USER true    en     Snorre  Gulla                    2022-03-22 2022-03-22 Moritella spp, Moritella viscosa, Phocoenobacter spp, Aliivibrio spp , Renibacterium spp, Pasteurella spp, Flavobacterium spp, Tenacibaculum spp, Aeromonas spp, Yersinia spp, Vibrio anguillarum
+11 annolsen      Anne Berit             Olsen       anne-berit.olsen@vetinst.no                47625308   ROLE_USER true    en     Anne Berit Olsen                 2022-04-06 2025-03-04 Flavobacterium spp, Endozoicomonas spp, VIGAS_Training_June2025_Main
+12 taranskjerdal Olaug Taran            Skjerdal    taran.skjerdal@vetinst.no                  48216934   ROLE_USER true    en     Olaug Taran Skjerdal             2022-04-07 2025-06-19 Listeria spp, Listeria monocytogenes i rakfisk 2021, Color Magic, OEIO_Listeria, Listeria_Senja-Lab customer February2025, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, Bacillus spp
+13 cathriab      Cathrine Arnason       Bøe         cathrine.arnason.boe@vetinst.no            97425214   ROLE_USER true    en     Cathrine Arnason  Bøe            2022-04-08 2025-05-23 MiSeq_NextSeq, Influenza A virus, Saprolegnia, Mycobacterium spp, Treponema spp, Piscirikettsia spp, Aliivibrio spp , Vibrio anguillarum, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, Actinobacillus spp, Slush
+14 evezeyl       Eve Marie Louise Zeyl  Fiskebeck   eve.marie.louise.zeyl.fiskebeck@vetinst.no 45415690   ROLE_USER true    en     Eve Marie Louise Zeyl  Fiskebeck 2022-04-08 2022-04-29 MiSeq_NextSeq, Influenza A virus, Listeria spp, Lm_2022-22-841_EURL, Renibacterium spp, OEIO_Listeria, Salmonella spp, Enterococcus spp, Staphylococcus spp, Streptococcus spp, Campylobacter spp, Pseudomonas spp, Pantoea spp, Hafnia spp, Klebsiella spp, Enterobacter spp, Mycobacterium spp, Actinobacillus spp, Treponema spp, Providencia spp, Yersinia spp, Clostridium spp, Aliivibrio spp , Endozoicomonas spp, Pasteurella spp, Flavobacterium spp, Phocoenobacter spp, Brachyspira spp, Acinetobacter spp, Tenacibaculum spp, Moritella spp, Aeromonas spp, Slush, APEC_all, Listeria_Senja-Lab customer February2025, 31218-INIKA-MMJ-Escherichia, 31218-INIKA-ELM-Klebsiella, 31218-INIKA-ELM-Escherichia, 31218-INIKA-AM-Salmonella, 31218-INIKA-AM-Klebsiella, 31218-INIKA-AM-Escherichia
+15 solveigmo     Solveig Sølverød       Mo          solveig.mo@vetinst.no                      91347248   ROLE_USER true    en     Solveig Sølverød Mo              2022-04-26 2022-04-26 Campylobacter spp, Escherichia spp, Salmonella spp, Slush, vitfinder_test, Staphylococcus spp, sta_faar_eus, campy_gjengangere, Streptococcus spp, Providencia spp, EDEC2021, EURL-Salmonella_PT_Typing_2023, Actinobacillus spp, Avian pathogenic Escherichia coli, PT38-Campylobacter, Enterococcus spp, PAHW_SOA8_indicator_Ecoli, PAHW_SOA8_APEC, PAHW_SOA8_Saureus, PAHW_SOA8_Strepuberis, Strep_agalactiae_TINE, EURL-Salmonella_PT_Typing_2024, 12010_33J_ESBL_fjorfe, APEC_all, APEC-Animalia_overvaakning, PAHW_SOA8_Ecoli_pig, PAHW_SOA8_APP, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, EARS-Vet_JAMRAI-2, sta_faar_eus_utvidelse, PAHW_SOA8_2024_APEC, Masterstudenter Ane og Hedda, Aeromonas spp, Listeria spp, PT43_Campylobacter
+16 hannenilsen   Hanne                  Nilsen      hanne.nilsen@vetinst.no                    90409078   ROLE_USER true    en     Hanne Nilsen                     2022-04-27 2022-04-29 Flavobacterium spp, Phocoenobacter spp, Piscirikettsia spp, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main
+17 mariannesunde Marianne               Sunde       marianne.sunde@vetinst.no                  900 93415  ROLE_USER true    en     Marianne Sunde                   2022-05-25 2022-05-25 Staphylococcus spp, Salmonella spp, Escherichia spp, Klebsiella spp, Enterobacter spp, Slush, Validation_spaTyper, Actinobacillus spp, Enterococcus spp, 12010_33i_MSSA_Hest, Hund_ESBL_NVI_Normvet, Brachyspira spp
+18 grojo         Gro Skøien             Johannessen gro.johannessen@vetinst.no                 40068181   ROLE_USER true    en     Gro Skøien  Johannessen          2022-05-25 2022-05-25 Escherichia spp, Yersinia spp, VIGAS_Training_June2025_Main, VIGAS_Training_June2025_Sub
+19 girum         Girum Tadesse          Tessema     girum.tessema@vetinst.no                   41306469   ROLE_USER true    en     Girum Tadesse  Tessema           2022-12-01 2023-01-16 Hafnia_PostiveControl, Hafnia spp, Mycobacterium spp, VIGAS_Training_June2025_Main, VIGAS_Training_June2025_Sub
+
+id username      firstname lastname email                 phone       role      enabled locale label         created    modified
+20 data_transfer Data      Transfer datatransfer@vigas.no +4799881889 ROLE_USER true    en     Data Transfer 2023-01-24 2023-01-24
+
+id username firstname         lastname        email                                      phone    role      enabled locale label                             created    modified   projects
+21 erpa     Erik              Paulshus        erik.paulshus@vetinst.no                   93082252 ROLE_USER false   en     Erik  Paulshus                    2023-03-29 2024-01-29 EDEC2021
+22 helkarls Helene Kristine   Solsvik Karlsen helene.kristine.solsvik.karlsen@vetinst.no 40644955 ROLE_USER true    en     Helene Kristine   Solsvik Karlsen 2023-06-02 2023-06-06 VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main
+
+id username   firstname lastname email                phone    role      enabled locale label     created    modified
+23 test_user  Test      User     test.user@vetinst.no 99881889 ROLE_USER true    en     Test User 2023-06-20 2023-06-20
+
+id username         firstname             lastname             email                                            phone        role      enabled locale label                                 created    modified   projects
+24 trishangu        Trishang              Udhwani              trishang.udhwani@vetinst.no                      93932978     ROLE_USER true    en     Trishang Udhwani                      2023-08-03 2023-08-03 Listeria spp, Slush, Slush_Sub, Salmonella spp
+25 alvalo           Alejandra             Villamil Alonso      alvalo@aqua.dtu.dk                               004591814643 ROLE_USER true    en     Alejandra Villamil Alonso             2023-10-20 2023-10-20 Renibacterium spp
+26 hkaspersen       Håkon                 Kaspersen            hakon.kaspersen@vetinst.no                       41620511     ROLE_USER true    en     Håkon Kaspersen                       2023-11-13 2023-11-13 Escherichia spp, Klebsiella spp, Salmonella spp, Enterococcus spp, Staphylococcus spp, Streptococcus spp, Campylobacter spp, Pseudomonas spp, Pantoea spp, Hafnia spp, Enterobacter spp, Mycobacterium spp, Actinobacillus spp, Treponema spp, Providencia spp, Listeria spp, Yersinia spp, Clostridium spp, Aliivibrio spp , Endozoicomonas spp, Renibacterium spp, Pasteurella spp, Flavobacterium spp, Phocoenobacter spp, Brachyspira spp, Acinetobacter spp, Tenacibaculum spp, Moritella spp, Aeromonas spp, Slush, ESBL_Hast, 12010_33i_MSSA_Hest, Hund_ESBL_NVI_Normvet, PAHW_SOA8_indicator_Ecoli, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, Sverige RIksmat ESBL, MRSA hest, PAHW_SOA8_APP
+27 evalena          Eva Lena Fjeld        Estensmo             Eva.Lena.Fjeld.Estensmo@vetinst.no               46811731     ROLE_USER true    en     Eva Lena Fjeld Estensmo               2024-08-08 2024-10-28 EQA-13-STEC-2024, APEC_all, PT41-EURL-STEC, Escherichia spp, EURL-Salmonella_PT_Typing_2024, APEC-Animalia_overvaakning, VIGAS_Training_June2025_Main, Clostridium spp, C_perfringens, PAHW_SOA8_APP, Masterstudenter Ane og Hedda, PT45-EURL-STEC
+28 thhaverk         Thomas                Haverkamp            thomas.haverkamp@vetinst.no                      4709 4932    ROLE_USER true    en     Thomas  Haverkamp                     2024-10-15 2024-10-15 Actinobacillus spp, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, PAHW_SOA8_APP, Slush
+29 stefan.borjesson Stefan                Börjesson            Carl-Henrik.Stefan.Borjesson@vetinst.no          40331901     ROLE_USER true    en     Stefan  Börjesson                     2025-01-16 2025-01-16 Staphylococcus spp, Escherichia spp, 12010_33J_ESBL_fjorfe, ESBL_Hast, 12010_33i_MSSA_Hest, Hund_ESBL_NVI_Normvet, PAHW_SOA8_Saureus, Sverige RIksmat ESBL, MRSA hest, Enterobacter spp
+30 01bergsj         Bjarne                Bergsjø              bjarne.bergsjo@vetinst.no                        91598780     ROLE_USER true    en     Bjarne Bergsjø                        2025-04-08 2025-04-08 Salmonella spp, Campylobacter spp, Escherichia spp, Providencia spp
+31 magnusnosnes     Magnus  Nygård        Osnes                magnus.nygard.osnes@vetinst.no                   47865490     ROLE_USER true    en     Magnus  Nygård Osnes                  2025-05-06 2025-05-06 Influenza A virus
+32 ragton           Ragnhild              Tønnessen            ragnhild.tonnessen@vetinst.no                    97537430     ROLE_USER true    en     Ragnhild Tønnessen                    2025-05-19 2025-09-11 Influenza A virus, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main
+33 simenfn          Simen Foyn            Nørstebø             simen.foyn.norstebo@vetinst.no                   45854087     ROLE_USER true    en     Simen Foyn Nørstebø                   2025-05-19 2025-05-19 Salmonella spp, Campylobacter spp, Providencia spp, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main, Escherichia spp, Slush
+34 bgjerset         Britt                 Gjerset              britt.gjerset@vetinst.no                         97561592     ROLE_USER true    en     Britt Gjerset                         2025-05-19 2025-05-19 Influenza A virus, VIGAS_Training_June2025_Main
+35 ingkra           Inger Helene          Kravik               inger.helene.kravik@vetinst.no                   41806491     ROLE_USER true    en     Inger Helene Kravik                   2025-06-13 2025-06-13 VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main
+36 jalu             Jane                  Ludvigsen            jane.ludvigsen@vetinst.no                        45402013     ROLE_USER true    en     Jane Ludvigsen                        2025-06-13 2025-06-13 Hafnia_PostiveControl, Hafnia spp, VIGAS_Training_June2025_Sub, VIGAS_Training_June2025_Main
+37 magowcz          Magdalena Monika      Owczarek-Koscielniak magdalena.monika.owczarek-koscielniak@vetinst.no 45503528     ROLE_USER true    en     Magdalena Monika Owczarek-Koscielniak 2025-06-19 2025-06-19 VIGAS_Training_June2025_Main, VIGAS_Training_June2025_Sub
+38 magnusl          Magnus                 Leithaug            Magnus.Leithaug@vetinst.no                       93015088     ROLE_USER true    en     Magnus  Leithaug                      2025-06-19 2025-06-19 VIGAS_Training_June2025_Main, VIGAS_Training_June2025_Sub, Slush
+39 kristinsp        Kristin Sæbø          Pettersen            kristin.pettersen@vetinst.no                     93267644     ROLE_USER true    en     Kristin Sæbø Pettersen                2025-06-26 2025-06-26 campy_gjengangere
+40 marsag           Maryam                Saghafian            maryam.saghafian@vetinst.no                      96735380     ROLE_USER true    en     Maryam Saghafian                      2025-08-13 2025-08-13 Mycobacterium spp
+41 irener           Irene                 Roalkvam             Irene.Roalkvam@vetinst.no                        40302051     ROLE_USER true    en     Irene Roalkvam                        2025-08-13 2025-08-13 Aliivibrio spp , Slush
+42 torillt          Torill Thoreby        Jensen               torill-thoreby.jensen@vetinst.no                 40304353     ROLE_USER true    en     Torill Thoreby  Jensen                2025-08-13 2025-08-13 Aliivibrio spp 
+43 annekijewski     Anne Cecilie Riihonen Kijewski             Anne.Cecilie.Riihonen.Kijewski@vetinst.no        48078100     ROLE_USER true    en     Anne Cecilie Riihonen Kijewski        2025-09-11 2025-09-11 VIGAS_Training_June2025_Main, VIGAS_Training_June2025_Sub, campy_gjengangere
+44 rakuip           Raoul Valentin        Kuiper               Raoul.Valentin.Kuiper@vetinst.no                 45500382     ROLE_USER true    en     Raoul Valentin Kuiper                 2025-09-11 2025-09-11 VIGAS_Training_June2025_Sub
+46 gmarselis        George                Marselis             george.marselis@vetinst.no                       41359327     ROLE_USER true    en     George Marselis                       2026-03-22 2026-04-01 test_gmarselis, Test_Data_Uploading, Slush, Controls, Slush_Sub, NIRD_only_eukaryote , shotgun, Amplicon
+user gmarselis not found
+user 999nonexistent not found
+6.68user 11.96system 3:02.71elapsed 10%CPU (0avgtext+0avgdata 30404maxresident)k
+0inputs+1695584outputs (1major+280253minor)pagefaults 0swaps
