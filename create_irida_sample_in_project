@@ -55,17 +55,23 @@ create_irida_sample_in_project() {
     json+="}"
 
     local response
-    response=$( /usr/bin/curl --silent -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "${json}" ) || { echo "ERROR: curl failed" >&2 ; return 1 ; }
-    [[ -z "${response}" ]] && { echo "ERROR: no response from server" >&2 ; return 1 ; }
+    local http_code
+    response=$( /usr/bin/curl --silent -w "\n%{http_code}" -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "${json}" )
+    http_code=$( echo "${response}" | tail -1 )
+    response=$( echo "${response}" | head -n -1 )
+    [[ "${http_code}" == "403" ]] && { echo "ERROR: HTTP 403 — not a member of project ${project_id} or insufficient permissions" >&2 ; return 1 ; }
+    [[ "${http_code}" == "404" ]] && { echo "ERROR: HTTP 404 — project ${project_id} not found" >&2 ; return 1 ; }
+    [[ "${http_code}" == "400" ]] && { echo "ERROR: HTTP 400 — bad request: $( echo "${response}" | /usr/bin/jq -r '.message // "unknown error"' )" >&2 ; return 1 ; }
+    [[ -z "${response}" ]] && { echo "ERROR: no response from server (HTTP ${http_code})" >&2 ; return 1 ; }
     echo "${response}" | /usr/bin/jq '[.resource | {id: .identifier, sampleName: .sampleName, organism: .organism, description: .description, isolate: .isolate, strain: .strain, collectedBy: .collectedBy, collectionDate: .collectionDate, geographicLocationName: .geographicLocationName, isolationSource: .isolationSource, latitude: .latitude, longitude: .longitude, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), self: (.links[] | select(.rel == "self") | .href)}]' | /usr/bin/mlr --ijson --opprint cat
 }
 
 complete -F _irida_projects_complete create_irida_sample_in_project
 
-# NOTE: optional fields not provided are omitted from the JSON payload entirely.
-# IRIDA rejects null strings for typed fields such as collectionDate (expects ISO date or absent).
-# use update_irida_sample (PATCH /api/samples/{id}) to set optional fields after creation.
-#
+# NOTE: All arguments are positional. Optional fields must be passed in order —
+# there is no picking and choosing. Pass an empty string "" as a placeholder
+# for any optional field you want to skip.
+
 # NOTE: IRIDA 23.01.3 rejects null strings for typed fields and returns HTTP 400
 # with "JSON parse error: Unparseable date: null" if collectionDate or other typed
 # fields are sent as the string "null" rather than omitted. Omit optional fields
