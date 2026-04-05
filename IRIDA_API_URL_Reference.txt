@@ -1,5 +1,5 @@
 IRIDA REST API - curl reference
-irida.vigasp.vetinst.no:8080/irida-23.01.3
+http://irida.vigasp.vetinst.no:8080/irida-23.01.3
 #####################################################################################
 
 TEXT REFERENCE
