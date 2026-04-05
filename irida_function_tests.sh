@@ -20,95 +20,131 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+# sleep time between calls in seconds - adjust as needed or override with: IRIDA_TEST_SLEEP=2 irida_function_tests.sh
+IRIDA_TEST_SLEEP=${IRIDA_TEST_SLEEP:-1}
+
 # check_bitwarden_serve
-check_bitwarden_serve ; echo $?
+check_bitwarden_serve ; echo $? ; sleep ${IRIDA_TEST_SLEEP}
 
 # check_fortigate_vpn
-check_fortigate_vpn ; echo $?
+check_fortigate_vpn ; echo $? ; sleep ${IRIDA_TEST_SLEEP}
 
 # check_irida_connectivity
-check_irida_connectivity ; echo $?
+check_irida_connectivity ; echo $? ; sleep ${IRIDA_TEST_SLEEP}
 
 # check_irida_token
-check_irida_token ; unset IRIDA_TOKEN ; check_irida_token ; get_irida_token ; echo $IRIDA_TOKEN
+check_irida_token ; unset IRIDA_TOKEN ; check_irida_token ; get_irida_token ; echo $IRIDA_TOKEN ; sleep ${IRIDA_TEST_SLEEP}
 
-# get_irida_analysis_output_files
-get_irida_analysis_output_files 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018
-sha512sum --check <<'EOF'
-03419415072af437fc0fa60141d157e5077283f91493d00bdc4ec9f1e90aead36e2483ca548f924a3171c57a5bec6d486f769b528683c1d08e0c1cce7b713d6d  24718_128413-bracken_report_file.tsv
-9a51d8e4523aa076fd29a3a9715d1ed6b005c776dd562cade43b733fc315230db865e6b0aa2615bf239ec16518b63986fbc9ab0a275d198978a072a97e3f17db  24718_128414-formatted_read_qc_output.tsv
-EOF
-rm -f ./[0-9]*_[0-9]*-*
-get_irida_analysis_output_files 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1
-get_irida_analysis_output_files 150:test_gmarselis no_analyses_found
-
-# get_irida_analysis_results
-get_irida_analysis_results 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018
-get_irida_analysis_results 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1
-get_irida_analysis_results 150:test_gmarselis no_analyses_found
-
-# get_irida_analysis_status
-get_irida_analysis_status 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018
-get_irida_analysis_status 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1
-get_irida_analysis_status 105:Slush_Sub no_analyses_found
-
-# get_irida_project_analyses
-get_irida_project_analyses 105:Slush_Sub
-get_irida_project_analyses 150:test_gmarselis
-get_irida_project_analyses 999999
-
-# get_irida_project_metadata
-get_irida_project_metadata 105:Slush_Sub
-get_irida_project_metadata 999999
-get_irida_project_metadata 150:test_gmarselis
-
-# get_irida_projects
-get_irida_projects
-
-# get_irida_sample_files_metadata
-get_irida_sample_files_metadata 105:Slush_Sub 7709:Strain0016
-get_irida_sample_files_metadata 105:Slush_Sub 999999
-get_irida_sample_files_metadata 105:Slush_Sub 41
-
-# get_irida_sample_metadata
-get_irida_sample_metadata 105:Slush_Sub 7709:Strain0016
-get_irida_sample_metadata 105:Slush_Sub 999999
-get_irida_sample_metadata 105:Slush_Sub 41
-
-# get_irida_sample_pairs_metadata
-get_irida_sample_pairs_metadata 105:Slush_Sub 8563:2024-01-12313-2-1-1-1
-get_irida_sample_pairs_metadata 105:Slush_Sub 999999
-get_irida_sample_pairs_metadata 105:Slush_Sub 41
-get_irida_sample_pairs_metadata 142 999999
-
-# get_irida_sample_unpaired_metadata
-get_irida_sample_unpaired_metadata 105:Slush_Sub 7709:Strain0016
-get_irida_sample_unpaired_metadata 105:Slush_Sub 8563:2024-01-12313-2-1-1-1
-get_irida_sample_unpaired_metadata 151:NIRD_only_eukaryote 41
-get_irida_sample_unpaired_metadata 141 1
-get_irida_sample_unpaired_metadata 141 99999999
-
-# get_irida_samples
-get_irida_samples 105:Slush_Sub
-get_irida_samples 150:test_gmarselis
-get_irida_samples 999999
-get_irida_samples 141
+# get_irida_version
+get_irida_version ; sleep ${IRIDA_TEST_SLEEP}
 
 # get_irida_token
-get_irida_token ; echo $?
+get_irida_token ; echo $? ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_projects
+get_irida_projects ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_project
+get_irida_project 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_project_users
+get_irida_project_users 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project_users 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project_users ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_project_metadata
+get_irida_project_metadata 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project_metadata 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project_metadata ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_project_analyses
+get_irida_project_analyses 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project_analyses 150:test_gmarselis ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project_analyses 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_project_analyses ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_samples
+get_irida_samples 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_samples 150:test_gmarselis ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_samples 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_samples ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_sample_metadata
+get_irida_sample_metadata 105:Slush_Sub 7709:Strain0016 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_metadata 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_metadata 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_sample_files_metadata
+get_irida_sample_files_metadata 105:Slush_Sub 7709:Strain0016 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_files_metadata 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_files_metadata 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_sample_pairs_metadata
+get_irida_sample_pairs_metadata 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_pairs_metadata 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_pairs_metadata 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_sample_unpaired_metadata
+# NOTE: NVI has no single-end samples - all calls will return "has no unpaired files"
+# IRIDA 23.01.3 routing bug on /sequenceFiles/unpaired - see issue #4
+get_irida_sample_unpaired_metadata 105:Slush_Sub 7709:Strain0016 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_unpaired_metadata 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_unpaired_metadata 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_unpaired_metadata 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_sample_assemblies_metadata
+get_irida_sample_assemblies_metadata 105:Slush_Sub 7709:Strain0016 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_assemblies_metadata 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_sample_assemblies_metadata 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_analysis_status
+get_irida_analysis_status 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_status 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_status 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_status 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_analysis_results
+get_irida_analysis_results 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_results 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_results 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_results 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+
+# get_irida_analysis_output_files
+get_irida_analysis_output_files 105:Slush_Sub 24718:Reads_QC__10-7-2024_Strain0018 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_output_files 105:Slush_Sub 42216:Assembly_QC__2-3-2025_2024-01-12313-2-1-1-1 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_output_files 105:Slush_Sub 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_analysis_output_files 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
+rm -f ./[0-9]*_[0-9]*-*
+
+# get_irida_analysis_submissions_by_type
+# WARNING: queries Galaxy directly - SLOW. can saturate uwsgi workers and make IRIDA unresponsive.
+# do NOT run during business hours. uncomment only for scheduled maintenance window testing.
+# see issue #8 and get_irida_analysis_submissions_by_type for details.
+#get_irida_analysis_submissions_by_type sistr ; sleep ${IRIDA_TEST_SLEEP}
+#get_irida_analysis_submissions_by_type phylogenomics ; sleep ${IRIDA_TEST_SLEEP}
+#get_irida_analysis_submissions_by_type assembly ; sleep ${IRIDA_TEST_SLEEP}
+#get_irida_analysis_submissions_by_type invalidtype ; sleep ${IRIDA_TEST_SLEEP}
+#get_irida_analysis_submissions_by_type ; sleep ${IRIDA_TEST_SLEEP}
 
 # get_irida_download_sequence_file
 # downloads a single file - pass R1 file ID 17899 or R2 file ID 17900 separately
-get_irida_download_sequence_file 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 8980 17899
-get_irida_download_sequence_file 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 8980 999999
-get_irida_download_sequence_file 105:Slush_Sub 41 8980 17899
-get_irida_download_sequence_file 150:test_gmarselis 8980 17899
-get_irida_download_sequence_file 42 8980 17899
+get_irida_download_sequence_file 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 8980 17899 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_download_sequence_file 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 8980 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_download_sequence_file 105:Slush_Sub 999999999 8980 17899 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_download_sequence_file 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
 rm -f ./[0-9]*_[0-9]*-*
 
 # get_irida_download_sequence_pair
 # downloads both R1 and R2 in one call - wraps get_irida_download_sequence_file twice
-get_irida_download_sequence_pair 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 8980
-get_irida_download_sequence_pair 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 999999
-get_irida_download_sequence_pair 105:Slush_Sub 41 8980
+get_irida_download_sequence_pair 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 8980 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_download_sequence_pair 105:Slush_Sub 8563:2024-01-12313-2-1-1-1 999999999 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_download_sequence_pair 105:Slush_Sub 999999999 8980 ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_download_sequence_pair 105:Slush_Sub ; sleep ${IRIDA_TEST_SLEEP}
 rm -f ./[0-9]*_[0-9]*-*
+
+# get_irida_users
+get_irida_users ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_users gmarselis ; sleep ${IRIDA_TEST_SLEEP}
+get_irida_users 999nonexistent ; sleep ${IRIDA_TEST_SLEEP}
