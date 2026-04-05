@@ -18,83 +18,86 @@
 # provides project then sample ID completions for functions that need both
 _irida_samples_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-    if [[ "${COMP_CWORD}" -eq 1 ]]; then
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
-        local project_id="${COMP_WORDS[1]%%:*}"
-        local samples
-        samples=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"' 2>/dev/null )
-        if [[ -z "${samples}" ]]; then
-            COMPREPLY=( $(compgen -W "no_samples_found" -- "${COMP_WORDS[COMP_CWORD]}") )
-        else
-            COMPREPLY=($(compgen -W "${samples}" -- "${COMP_WORDS[COMP_CWORD]}"))
-        fi
-    fi
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        2)  local project_id="${COMP_WORDS[1]%%:*}"
+            local samples
+            samples=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"' 2>/dev/null )
+            if [[ -z "${samples}" ]]; then
+                COMPREPLY=( $(compgen -W "no_samples_found" -- "${COMP_WORDS[COMP_CWORD]}") )
+            else
+                COMPREPLY=($(compgen -W "${samples}" -- "${COMP_WORDS[COMP_CWORD]}"))
+            fi ;;
+        *)  COMPREPLY=() ;;
+    esac
 }
 
 # provides project ID completions for functions that only need a project
-_irida_projects_complete() { 
+_irida_projects_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-    COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(    .name)"')" -- "${COMP_WORDS[COMP_CWORD]}")); 
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        *)  COMPREPLY=() ;;
+    esac
 }
 
 # provides project then analysis ID completions for get_irida_analysis_results
 _irida_analysis_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-    if [[ "${COMP_CWORD}" -eq 1 ]]; then
-        local IFS=$'\n'
-        mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}")
-    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
-        local project_id="${COMP_WORDS[1]%%:*}"
-        local analyses
-        analyses=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' 2>/dev/null )
-        if [[ -z "${analyses}" ]]; then
-            COMPREPLY=( "no_analyses_found" )
-        else
-            mapfile -t COMPREPLY < <(compgen -W "${analyses}" -- "${COMP_WORDS[COMP_CWORD]}")
-        fi
-    fi
+    case ${COMP_CWORD} in
+        1)  local IFS=$'\n'
+            mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ;;
+        2)  local project_id="${COMP_WORDS[1]%%:*}"
+            local analyses
+            analyses=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' 2>/dev/null )
+            if [[ -z "${analyses}" ]]; then
+                COMPREPLY=( "no_analyses_found" )
+            else
+                mapfile -t COMPREPLY < <(compgen -W "${analyses}" -- "${COMP_WORDS[COMP_CWORD]}")
+            fi ;;
+        *)  COMPREPLY=() ;;
+    esac
 }
 
-# provides project, sample, pair, file ID completions for download_irida_sequence_file
+# provides project, sample, pair, file ID completions for get_irida_download_sequence_file
 _irida_download_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-    if [[ "${COMP_CWORD}" -eq 1 ]]; then
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
-        local project_id="${COMP_WORDS[1]%%:*}"
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    elif [[ "${COMP_CWORD}" -eq 3 ]]; then
-        local sample_id="${COMP_WORDS[2]%%:*}"
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    elif [[ "${COMP_CWORD}" -eq 4 ]]; then
-        local sample_id="${COMP_WORDS[2]%%:*}"
-        local pair_id="${COMP_WORDS[3]%%:*}"
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg pid "${pair_id}" '.resource.resources[] | select(.identifier == $pid) | .files[] | "\(.identifier):\(.fileName)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    fi
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        2)  local project_id="${COMP_WORDS[1]%%:*}"
+            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        3)  local sample_id="${COMP_WORDS[2]%%:*}"
+            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        4)  local sample_id="${COMP_WORDS[2]%%:*}"
+            local pair_id="${COMP_WORDS[3]%%:*}"
+            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg pid "${pair_id}" '.resource.resources[] | select(.identifier == $pid) | .files[] | "\(.identifier):\(.fileName)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        *)  COMPREPLY=() ;;
+    esac
 }
 
 # provides three-level tab completion: project list, then samples from that project, then pairs from that sample
 _irida_download_pair_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-    if [[ "${COMP_CWORD}" -eq 1 ]]; then
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
-        local project_id="${COMP_WORDS[1]%%:*}"
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    elif [[ "${COMP_CWORD}" -eq 3 ]]; then
-        local sample_id="${COMP_WORDS[2]%%:*}"
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    fi
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        2)  local project_id="${COMP_WORDS[1]%%:*}"
+            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        3)  local sample_id="${COMP_WORDS[2]%%:*}"
+            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        *)  COMPREPLY=() ;;
+    esac
 }
 
 # tab completion for get_irida_sample_metadata: project list at arg 1, samples from that project at arg 2
 _irida_sample_metadata_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-    if [[ "${COMP_CWORD}" -eq 1 ]]; then
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    elif [[ "${COMP_CWORD}" -eq 2 ]]; then
-        local project_id="${COMP_WORDS[1]%%:*}"
-        COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}"))
-    fi
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        2)  local project_id="${COMP_WORDS[1]%%:*}"
+            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        *)  COMPREPLY=() ;;
+    esac
 }
+# NOTE: tab completion for PAIR_ID (arg 3) and FILE_ID (arg 4) triggers IRIDA routing bug
+# (NumberFormatException on /api/samples/{id}/pairs). Manual entry required for these arguments.
+# See issue #4.
