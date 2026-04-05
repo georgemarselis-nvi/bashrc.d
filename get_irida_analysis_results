@@ -38,7 +38,7 @@ get_irida_analysis_results() {
     local response
     response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     [[ -z "${response}" ]] && { echo "analysis ${2%%:*} returned no output files" ; return 1 ; }
-    echo "${response}" | /usr/bin/jq . ; echo
+    echo "${response}" | /usr/bin/jq '{id: .resource.identifier, analysis_type: .resource.analysisType.type, execution_id: .resource.executionManagerAnalysisId, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), output_files: [.resource.links[] | select(.rel | startswith("outputFile")) | {file: (.rel | ltrimstr("outputFile/")), url: .href}]}' | /usr/bin/mlr --ijson --opprint cat
 }
 
 complete -F _irida_analysis_complete get_irida_analysis_results
