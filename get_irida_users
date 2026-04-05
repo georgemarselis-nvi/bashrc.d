@@ -24,7 +24,12 @@ get_irida_users() {
     check_irida_token        || return 1
 
     if [[ -n "$1" ]]; then
-        /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${1}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq '[.projectResources.resources[] | {id: .identifier, name: .name, label: .label, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), genome_size: .genomeSize, min_coverage: .minimumCoverage, max_coverage: .maximumCoverage, sync_frequency: .syncFrequency, url: .links[0].href}]' | /usr/bin/mlr --ijson --opprint cat
+        local http_code
+        http_code=$( /usr/bin/curl --silent -o /dev/null -w "%{http_code}" -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${1}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        [[ "${http_code}" == "500" || "${http_code}" == "404" ]] && { echo "user ${1} not found" ; return 1 ; }
+        local response
+        response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${1}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        echo "${response}" | /usr/bin/jq '[.projectResources.resources[] | {id: .identifier, name: .name, label: .label, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), genome_size: .genomeSize, min_coverage: .minimumCoverage, max_coverage: .maximumCoverage, sync_frequency: .syncFrequency, url: .links[0].href}]' | /usr/bin/mlr --ijson --opprint cat
         return
     fi
 
@@ -46,6 +51,10 @@ get_irida_users() {
         count=$(( count + 1 ))
         printf "\r  fetching projects for users... %s  (%d/%d)" "${spinner:$(( spin_i % 4 )):1}" "${count}" "${total}" >&2
         spin_i=$(( spin_i + 1 ))
+
+        local http_code
+        http_code=$( /usr/bin/curl --silent -o /dev/null -w "%{http_code}" -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${username}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        [[ "${http_code}" == "500" || "${http_code}" == "404" ]] && { echo "user ${username} not found" ; return 1 ; }
 
         local user_info
         user_info=$(echo "${users_json}" | /usr/bin/jq -r --arg u "${username}" '.resource.resources[] | select(.username == $u) | [.identifier, .username, .firstName, .lastName, .email, .phoneNumber, .systemRole, (.enabled | tostring), .locale, .label, (.createdDate / 1000 | strftime("%Y-%m-%d")), (.modifiedDate / 1000 | strftime("%Y-%m-%d"))] | @tsv')
@@ -71,4 +80,9 @@ _get_irida_users_complete() {
     usernames=$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[].username')
     COMPREPLY=( $(compgen -W "${usernames}" -- "${cur}") )
 }
+
 complete -F _get_irida_users_complete get_irida_users
+
+# NOTE: IRIDA returns HTTP 500 instead of 404 for unknown usernames (UsernameNotFoundException).
+# The http_code check treats both 404 and 500 as "user not found" as a workaround.
+# See issue #4.
