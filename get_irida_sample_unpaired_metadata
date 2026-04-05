@@ -35,6 +35,7 @@ get_irida_sample_unpaired_metadata() {
 
 complete -F _irida_samples_complete get_irida_sample_unpaired_metadata
 
-# FIXME: /sequenceFiles/unpaired returns 500 - IRIDA routing bug, tries to parse
-# "unpaired" as a Long fileId. correct endpoint unknown. see catalina.out for stack trace.
-# /unpaired also fails. needs investigation against API docs or IRIDA source.
+# NOTE: /sequenceFiles/unpaired returns 500 - IRIDA 23.01.3 routing bug, tries to parse
+# "unpaired" as a Long fileId (NumberFormatException). /unpaired also fails.
+# Workaround: filter /sequenceFiles client-side excluding IDs found in /pairs.
+# Cannot be tested - NVI has no single-end samples. See issue #4.
