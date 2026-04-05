@@ -23,6 +23,8 @@
 # sleep time between calls in seconds - adjust as needed or override with: IRIDA_TEST_SLEEP=2 irida_function_tests.sh
 IRIDA_TEST_SLEEP=${IRIDA_TEST_SLEEP:-1}
 
+for f in ~/.bashrc.d/check_* ~/.bashrc.d/get_irida_*; do source "${f}"; done
+
 # check_bitwarden_serve
 check_bitwarden_serve ; echo $? ; sleep ${IRIDA_TEST_SLEEP}
 
