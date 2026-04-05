@@ -31,6 +31,7 @@ get_irida_download_sequence_pair() {
     local pair_id="${3%%:*}"
     local file_ids
     file_ids=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg pid "${pair_id}" '.resource.resources[] | select(.identifier == $pid) | .files[].identifier' )
+    [[ -z "${file_ids}" ]] && { echo "pair ${pair_id} not found for sample ${sample_id}" ; return 1 ; }
     for file_id in ${file_ids}; do
         get_irida_download_sequence_file "${1}" "${2}" "${pair_id}" "${file_id}"
     done
