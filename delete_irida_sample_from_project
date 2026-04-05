@@ -1,0 +1,50 @@
+# delete_irida_sample_from_project
+# delete a sample from an IRIDA project
+#
+# usage: delete_irida_sample_from_project PROJECT_ID SAMPLE_ID
+#
+# WARNING: this is destructive. the sample and all its metadata will be removed
+# from the project. sequence files are NOT deleted from IRIDA storage.
+#
+# example: delete_irida_sample_from_project 154:ZZTEST_API_DO_NOT_USE 11743:ZZTEST_SAMPLE_DO_NOT_USE
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+delete_irida_sample_from_project() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID" >&2 ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
+
+    local project_id="${1%%:*}"
+    local sample_id="${2%%:*}"
+
+    local response
+    local http_code
+    response=$( /usr/bin/curl --silent -w "\n%{http_code}" -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples/${sample_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    http_code=$( echo "${response}" | tail -1 )
+    response=$( echo "${response}" | head -n -1 )
+    [[ "${http_code}" == "403" ]] && { echo "ERROR: HTTP 403 — not a member of project ${project_id} or insufficient permissions" >&2 ; return 1 ; }
+    [[ "${http_code}" == "404" ]] && { echo "ERROR: HTTP 404 — project ${project_id} or sample ${sample_id} not found" >&2 ; return 1 ; }
+    [[ "${http_code}" != "200" ]] && { echo "ERROR: unexpected HTTP ${http_code}" >&2 ; return 1 ; }
+    echo "sample ${sample_id} removed from project ${project_id}"
+    echo "${response}" | /usr/bin/jq '[.resource | {project_samples: (.links[] | select(.rel == "project/samples") | .href), project: (.links[] | select(.rel == "project") | .href)}]' | /usr/bin/mlr --ijson --opprint cat
+}
+
+complete -F _irida_samples_complete delete_irida_sample_from_project
+
+# NOTE: removing a sample from a project does not delete the sample or its sequence
+# files from IRIDA storage. the sample still exists and can be re-added to a project.
+# to permanently delete sequence files use delete_irida_sequence_file.
