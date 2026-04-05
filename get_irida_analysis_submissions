@@ -37,7 +37,7 @@ get_irida_analysis_submissions() {
     echo    "  DO NOT RUN THIS AGAINST LIVE VIGASP." >&2
     echo    "  Serving cached result in:" >&2
 
-    for _i in $(seq 10 -1 1); do
+    for _i in $(seq 15 -1 1); do
         printf "\r  %2d ... " "${_i}" >&2
         sleep 1
     done
@@ -50,7 +50,7 @@ get_irida_analysis_submissions() {
     echo "" >&2
 
     if [[ -x /usr/bin/toilet ]]; then
-        /usr/bin/toilet -f term --filter gay --filter border "CACHED RESULT -- NOT LIVE DATA" >&2
+        /usr/bin/toilet -f standard --filter gay --filter border "CACHED RESULT NOT LIVE DATA" >&2
     else
         echo "*** CACHED RESULT -- NOT LIVE DATA ***" >&2
     fi
@@ -83,5 +83,5 @@ get_irida_analysis_submissions() {
 # NOTE: IRIDA makes synchronous blocking calls to Galaxy for every analysis submission in the list.
 # GET /api/analysisSubmissions has no type filter, no pagination limit, and no timeout.
 # With a full assembly history this means thousands of sequential Galaxy API calls.
-# DO NOT run this function against live VIGASP 23.01.3. Use the cached output only.
-# This is an IRIDA architectural issue, not a bug in this function.
+# DO NOT run this function against live IRIDA 23.01.3. Use the cached output, for demo puproses.
+# This is an VIGASP hardware availability issue, not a bug in this function.
