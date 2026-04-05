@@ -1,4 +1,3 @@
-[gmarselis@molly.marsel.is .bashrc.d (main)]$ curl -s -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions" -H "Authorization: Bearer ${IRIDA_TOKEN}" | jq .
 {
   "resource": {
     "resources": [
