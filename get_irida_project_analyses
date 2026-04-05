@@ -26,7 +26,10 @@ get_irida_project_analyses() {
     response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     [[ -z "${response}" ]] && { echo "project ${1%%:*} not found" ; return 1 ; }
     [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "project ${1%%:*} has no analyses" ; return 1 ; }
-    echo "${response}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .name, state: .analysisState, type: .analysisType, cleaned: .analysisCleanedState, priority: .priority, workflow: .workflowId, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d"))}]' | /usr/bin/mlr --ijson --opprint cat
+    echo "${response}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .name, state: .analysisState, cleaned: .analysisCleanedState, priority: .priority, workflow: .workflowId, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d"))}]' | /usr/bin/mlr --ijson --opprint cat
 }
 
 complete -F _irida_projects_complete get_irida_project_analyses
+
+# NOTE: analysisType field is NOT present in GET /api/projects/{id}/analyses response.
+# It only appears in GET /api/analysisSubmissions/{id}/analysis when state=COMPLETED.
