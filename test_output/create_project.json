@@ -1,0 +1,32 @@
+{
+  "resource" : {
+    "name" : "ZZTEST_API_DO_NOT_USE",
+    "createdDate" : 1775404124000,
+    "modifiedDate" : 1775404124000,
+    "projectDescription" : "THIS IS A TEST PROJECT DELETE ME",
+    "remoteURL" : null,
+    "organism" : "Bigfoot norvegicus",
+    "genomeSize" : null,
+    "minimumCoverage" : null,
+    "maximumCoverage" : null,
+    "syncFrequency" : null,
+    "label" : "ZZTEST_API_DO_NOT_USE",
+    "links" : [ {
+      "rel" : "project/analyses",
+      "href" : "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/154/analyses"
+    }, {
+      "rel" : "project/hash",
+      "href" : "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/154/hash"
+    }, {
+      "rel" : "project/users",
+      "href" : "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/154/users"
+    }, {
+      "rel" : "project/samples",
+      "href" : "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/154/samples"
+    }, {
+      "rel" : "self",
+      "href" : "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/154"
+    } ],
+    "identifier" : "154"
+  }
+}

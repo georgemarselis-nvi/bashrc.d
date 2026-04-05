@@ -1,0 +1,41 @@
+# create_irida_project
+# create a new project in IRIDA
+#
+# usage: create_irida_project NAME DESCRIPTION ORGANISM
+#
+# WARNING: this function only ECHOES the curl command. it does NOT execute it.
+# copy and run the output manually after verifying the parameters.
+#
+# example: create_irida_project ZZTEST_API_DO_NOT_USE "THIS IS A TEST PROJECT DELETE ME" "Bigfoot norvegicus"
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+create_irida_project() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} NAME DESCRIPTION ORGANISM" >&2 ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} NAME DESCRIPTION ORGANISM" >&2 ; return 1 ; }
+    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} NAME DESCRIPTION ORGANISM" >&2 ; return 1 ; }
+
+    local _name="${1}"
+    local _desc="${2}"
+    local _organism="${3}"
+
+    echo "# IRIDA will create a new project. verify parameters before running."
+    echo "/usr/bin/curl --silent -X POST \"http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects\" -H \"Authorization: Bearer \${IRIDA_TOKEN}\" -H \"Content-Type: application/json\" -d '{\"name\":\"${_name}\",\"projectDescription\":\"${_desc}\",\"organism\":\"${_organism}\"}' | /usr/bin/jq '[.resource | {id: .identifier, name: .name, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime(\"%Y-%m-%d\")), modified: (.modifiedDate / 1000 | strftime(\"%Y-%m-%d\")), self: (.links[] | select(.rel == \"self\") | .href)}]' | /usr/bin/mlr --ijson --opprint cat"
+    echo ""
+    echo "# expected response (example from test run 2026-04-05, project 154):"
+    /usr/bin/jq '[.resource | {id: .identifier, name: .name, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), self: (.links[] | select(.rel == "self") | .href)}]' < "${HOME}/.bashrc.d/test_output/create_project.json" | /usr/bin/mlr --ijson --opprint cat
+}
