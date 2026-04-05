@@ -34,6 +34,7 @@ get_irida_download_sequence_file() {
     local file_id="${4%%:*}"
     local filename
     filename=$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs/${pair_id}/files/${file_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.fileName')
+    [[ -z "${filename}" ]] && { echo "file ${file_id} not found in pair ${pair_id} for sample ${sample_id}" ; return 1 ; }
     /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs/${pair_id}/files/${file_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq" > "${filename}"
     echo "Downloaded: ${filename}"
 }
