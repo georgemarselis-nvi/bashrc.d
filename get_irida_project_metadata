@@ -36,3 +36,6 @@ complete -F _irida_projects_complete get_irida_project_metadata
 # metadata populated by Bracken. metadata structure is irregular - top 5 organisms
 # with taxonomy IDs and proportions. not easily tabulated with mlr - see GitHub ticket.
 # Also, this project does not show up in other API points. Interesting.
+#
+# NOTE: metadata structure is irregular - keys vary per sample depending on which pipelines
+# have run. Cannot be cleanly tabulated with mlr. Raw JSON output is intentional.
