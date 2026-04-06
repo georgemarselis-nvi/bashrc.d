@@ -19,16 +19,17 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 get_irida_token() {
-    check_irida_connectivity || return 1
-    # DO NOT ADD A CHECK FOR THE TOKEN HERE. WE ARE GENERATING THE TOKEN NOW.
     check_bitwarden_serve || { /usr/bin/printf "bw-serve.service not running; start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh\n" ; return 1 ; }
-    BW_URL="http://127.0.0.1:8087"
-    BW_ITEM="irida.vigasp.vetinst.no"
-    CLIENT_ID=$( /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
-    USERNAME=$(  /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/username/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
-    PASSWORD=$(  /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/password/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
-    CLIENT_SECRET=$( /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/notes/${BW_ITEM}" | /usr/bin/jq -r '.data.data' | grep '^token:' | /usr/bin/sed 's/^token://' )
-    export IRIDA_TOKEN=$(/usr/bin/curl --silent -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token')
+    # DO NOT ADD A CHECK FOR THE TOKEN HERE. WE ARE GENERATING THE TOKEN NOW.
+    check_irida_connectivity || return 1
+    local BW_URL="http://127.0.0.1:8087"
+    local BW_ITEM="772acf18-2e78-44a9-9fb8-b41500c8c864"
+    local BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
+    local USERNAME=$(      echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username' )
+    local PASSWORD=$(      /usr/bin/urlencode $( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password' ) )
+    local CLIENT_ID=$(     echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
+    local CLIENT_SECRET=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^token:'     | /usr/bin/sed 's/^token://'     )
+    export IRIDA_TOKEN=$(  /usr/bin/curl --silent -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token')
 }
 
 # turn off tab completing as a hint to the user

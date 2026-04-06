@@ -21,24 +21,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 get_irida_token_admin() {
-    check_irida_connectivity || return 1
-    # DO NOT ADD A CHECK FOR THE TOKEN HERE. WE ARE GENERATING THE TOKEN NOW.
-    check_bitwarden_serve || { /usr/bin/printf "bw-serve.service not running; start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh\n" ; return 1 ; }
-
-    if [[ -x /usr/bin/toilet ]]; then
+   if [[ -x /usr/bin/toilet ]]; then
         /usr/bin/toilet -f mono12 --filter border "WARNING" >&2
     fi
     echo "  You are about to authenticate as the IRIDA admin account." >&2
     echo "  IRIDA_TOKEN will be overwritten. Use get_irida_token to revert." >&2
+    echo "  You have 15 seconds to abort:" >&2
+    echo "" >&2
+
+    check_bitwarden_serve || { /usr/bin/printf "bw-serve.service not running; start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh\n" ; return 1 ; }
+    # DO NOT ADD A CHECK FOR THE TOKEN HERE. WE ARE GENERATING THE TOKEN NOW.
+    check_irida_connectivity || return 1
+
+     for _i in $(seq 15 -1 1); do
+        printf "\r  %2d ... " "${_i}" >&2
+        sleep 1
+    done
+    printf "\r         \r" >&2
     echo "" >&2
 
     local BW_URL="http://127.0.0.1:8087"
-    local BW_ITEM="irida.vigasp.vetinst.no_admin"
-    local CLIENT_ID=$(     /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/notes/${BW_ITEM}"    | /usr/bin/jq -r '.data.data' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
-    local USERNAME=$(      /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/username/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
-    local PASSWORD=$(      /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/password/${BW_ITEM}" | /usr/bin/jq -r '.data.data' )
-    local CLIENT_SECRET=$( /usr/bin/curl --silent --connect-timeout 1 "${BW_URL}/object/notes/${BW_ITEM}"    | /usr/bin/jq -r '.data.data' | grep '^token:' | /usr/bin/sed 's/^token://' )
-    export IRIDA_TOKEN=$( /usr/bin/curl --silent -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token' )
+    local BW_ITEM="fab1520e-3188-47d3-b1d0-b42400d6ade0"
+    local BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
+    local USERNAME=$(      echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username' )
+    local PASSWORD=$(      /usr/bin/urlencode $( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password' ) )
+    local CLIENT_ID=$(     echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
+    local CLIENT_SECRET=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^token:'     | /usr/bin/sed 's/^token://'     )
+    export IRIDA_TOKEN=$(  /usr/bin/curl --silent -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token' )
 }
 
 # no tab completion - function takes no arguments
+complete get_irida_token_admin
+
