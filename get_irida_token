@@ -22,6 +22,7 @@ get_irida_token() {
     check_bitwarden_serve || { /usr/bin/printf "bw-serve.service not running; start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh\n" ; return 1 ; }
     # DO NOT ADD A CHECK FOR THE TOKEN HERE. WE ARE GENERATING THE TOKEN NOW.
     check_irida_connectivity || return 1
+    export IRIDA_TOKEN=null
     local BW_URL="http://127.0.0.1:8087"
     local BW_ITEM="772acf18-2e78-44a9-9fb8-b41500c8c864"
     local BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )

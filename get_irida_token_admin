@@ -45,6 +45,7 @@ get_irida_token_admin() {
     # DO NOT ADD A CHECK FOR THE TOKEN HERE. WE ARE GENERATING THE TOKEN NOW.
     check_irida_connectivity || return 1
 
+    export IRIDA_TOKEN=null
     local BW_URL="http://127.0.0.1:8087"
     local BW_ITEM="fab1520e-3188-47d3-b1d0-b42400d6ade0"
     local BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
