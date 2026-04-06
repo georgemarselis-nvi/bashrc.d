@@ -101,3 +101,14 @@ _irida_sample_metadata_complete() {
 # NOTE: tab completion for PAIR_ID (arg 3) and FILE_ID (arg 4) triggers IRIDA routing bug
 # (NumberFormatException on /api/samples/{id}/pairs). Manual entry required for these arguments.
 # See issue #4.
+
+
+# provides sequencing run ID completions for get_irida_sequence_run
+_irida_sequence_run_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.label)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+

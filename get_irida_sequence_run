@@ -63,5 +63,5 @@ get_irida_sequence_run() {
 }
 
 # tab complete the sequncing run .identifier:.label
-complete _irida_sequence_run get_irida_sequence_run
+complete -F _irida_sequence_run_complete get_irida_sequence_run
 
