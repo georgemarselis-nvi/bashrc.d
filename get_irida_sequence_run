@@ -31,7 +31,7 @@ get_irida_sequence_run() {
     local _skip_countdown=0
     for _arg in "$@"; do
         [[ "${_arg}" == "--skip-countdown" ]] && _skip_countdown=1 && continue
-        [[ "${_arg}" =~ ^[0-9]+$ ]] && _id="${_arg}"
+        [[ "${_arg%%:*}" =~ ^[0-9]+$ ]] && _id="${_arg%%:*}"
     done
 
 
@@ -54,7 +54,7 @@ get_irida_sequence_run() {
     response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/${_id%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/json" )
     if [[ -n "${_id}" ]]; then
         [[ $( echo "${response}" | /usr/bin/jq -r '.resource.identifier // "null"' ) == "null" ]] && { echo "sequencing run ${_id} not found" ; return 1 ; }
-        echo "${response}" | /usr/bin/jq '[.resource | {id: .identifier, label: .label, description: .description, sequencerType: .sequencerType, uploadStatus: .uploadStatus, layoutType: .layoutType, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), workflow: .workflow}]' | /usr/bin/mlr --ijson --opprint cat
+        echo "${response}" | /usr/bin/jq '[.resource | {id: .identifier, label: .label, sequencerType: .sequencerType, uploadStatus: .uploadStatus, layoutType: .layoutType, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), workflow: .workflow, description: .description}]' | /usr/bin/mlr --ijson --opprint cat
     else
         [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "no sequencing runs" ; return 1 ; }
         echo "${response}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, label: .label, description: .description, sequencerType: .sequencerType, uploadStatus: .uploadStatus, layoutType: .layoutType, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), workflow: .workflow}]' | /usr/bin/mlr --ijson --opprint cat
