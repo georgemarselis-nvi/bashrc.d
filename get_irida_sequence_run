@@ -35,7 +35,6 @@ get_irida_sequence_run() {
     for _arg in "$@"; do
         [[ "${_arg}" == "--skip-countdown" ]] && _skip_countdown=1             && continue
         [[ "${_arg}" == "--sort-id"        ]] && _sort="sort -nr id"           && continue
-        [[ "${_arg}" == "--sort-created"   ]] && _sort="sort -nr created"      && continue
         [[ "${_arg}" == "--group-status"   ]] && _sort="sort -f uploadStatus"  && continue
         [[ "${_arg%%:*}" =~ ^[0-9]+$       ]] && _id="${_arg%%:*}"
     done
