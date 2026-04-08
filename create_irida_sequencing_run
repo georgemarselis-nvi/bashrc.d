@@ -1,0 +1,52 @@
+# create_irida_sequencing_run
+# create a new sequencing run in IRIDA
+# echo-only: copy and execute the output manually
+#
+# usage: create_irida_sequencing_run SEQUENCER_TYPE LAYOUT_TYPE [DESCRIPTION] [WORKFLOW]
+#
+# SEQUENCER_TYPE: free-form string, e.g. miseq, nextseq, miniseq, iseq, nextseq2k
+# LAYOUT_TYPE:    PAIRED_END or SINGLE_END
+# DESCRIPTION:    optional free-form string
+# WORKFLOW:       optional free-form string
+#
+# example: create_irida_sequencing_run miseq PAIRED_END "Salmonella run 2026-04-08"
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+create_irida_sequencing_run() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { /usr/bin/printf "Missing sequencer type.\nusage: ${FUNCNAME[0]} SEQUENCER_TYPE LAYOUT_TYPE [DESCRIPTION] [WORKFLOW]\n" ; return 1 ; }
+    [[ -z "${2}" ]] && { /usr/bin/printf "Missing layout type.\nusage: ${FUNCNAME[0]} SEQUENCER_TYPE LAYOUT_TYPE [DESCRIPTION] [WORKFLOW]\n" ; return 1 ; }
+    [[ "${2}" != "PAIRED_END" && "${2}" != "SINGLE_END" ]] && { echo "invalid layoutType: ${2} (PAIRED_END|SINGLE_END)" ; return 1 ; }
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun' -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg st "${1}" --arg lt "${2}" --arg desc "${3:-}" --arg wf "${4:-}" '{"sequencerType": $st, "layoutType": $lt, "description": $desc, "workflow": $wf}' )" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        201) echo "${_response}" | /usr/bin/jq '{id: (.resource.identifier | tonumber), sequencerType: .resource.sequencerType, uploadStatus: .resource.uploadStatus, layoutType: .resource.layoutType, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.resource.modifiedDate / 1000 | strftime("%Y-%m-%d")), workflow: .resource.workflow, description: .resource.description}' | /usr/bin/mlr --ijson --opprint cat ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden - insufficient permissions" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+complete -F _irida_layout_type_complete create_irida_sequencing_run
+
+# NOTE: sequencerType is a free-form string. IRIDA enforces no enum server-side.
+# Known values used by irida-uploader: miseq, nextseq, miniseq, iseq, nextseq2k.
+# layoutType is the only constrained field: PAIRED_END or SINGLE_END.
+# POST /api/sequencingrun confirmed working as non-admin on VIGASP 23.01.3.
+# uploadStatus is set to UPLOADING automatically by IRIDA on creation.
