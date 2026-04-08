@@ -17,5 +17,5 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 check_bitwarden_serve() {
-    systemctl --user is-active --quiet bw-serve.service
+    systemctl --user is-active --quiet bw-serve.service || { echo "ERROR: bw-serve.service is not running" >&2 ; return 1 ; }
 }
