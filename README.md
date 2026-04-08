@@ -85,9 +85,12 @@ get_irida_token_admin
 
 ### Sequencing runs
 
-| Function                 | Description |
-| ------------------------ | --- |
-| `get_irida_sequence_run` | list all sequencing runs or get a single run by ID. Supports `--sort-id`, `--group-status`. Requires admin token to see all runs; non-admin users see only their own runs. |
+| Function                      | Description                                                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_irida_sequence_run`      | list all sequencing runs or get a single run by ID. Supports `--sort-id`, `--group-status`. Requires admin token to see all runs; non-admin users see only their own runs. |
+| `create_irida_sequencing_run  | create a new sequencing run. Required: SEQUENCER_TYPE, LAYOUT_TYPE. Optional: DESCRIPTION, WORKFLOW.                                                                       |
+| `change_irida_sequencing_run` | update fields on a sequencing run. Requires admin token. Patchable: uploadStatus, sequencerType, layoutType, description. workflow is not patchable.                       |
+| `delete_irida_sequencing_run` | delete a sequencing run by ID. Requires admin token.                                                                                                                       |
 
 ### Analyses
 
@@ -173,6 +176,13 @@ hang indefinitely. The only indication that something is wrong is in the Tomcat 
 is no timeout or error returned to the client.
 
 ![IRIDA stack trace in server logs](screenshots/Screenshot_irida_shitting_itself_and_not_notifying_the_user_2026-04-06_230644.png)
+
+### IRIDA mangles UTF-8 in sequencing run fields
+
+Description and workflow fields containing non-ASCII characters (e.g. Norwegian æøå) are stored and
+retrieved with garbled encoding. The terminal is UTF-8; the corruption originates server-side in IRIDA. Confirmed on VIGASP 23.01.3.
+
+![IRIDA double-encoding the input string](screenshots/Screenshot_irida_double-encodes_its_strings_and_performs_no_checking_2026-04-08_223902.png)
 
 ---
 
