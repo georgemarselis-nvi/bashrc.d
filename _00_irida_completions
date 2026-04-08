@@ -132,3 +132,18 @@ _irida_layout_type_complete() {
         *)  COMPREPLY=() ;;
     esac
 }
+
+# tab completion for change_irida_sequencing_run: run id, uploadStatus, sequencerType, layoutType, description
+_irida_change_sequence_run_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/' -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Accept: application/json' | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.label | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        2)  COMPREPLY=( $(compgen -W "UPLOADING COMPLETE ERROR" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        3)  COMPREPLY=( $(compgen -W "directory miseq nextseq miniseq iseq nextseq2k" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        4)  COMPREPLY=( $(compgen -W "PAIRED_END SINGLE_END" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        5)  COMPREPLY=( '""' ) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
+
