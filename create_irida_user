@@ -1,0 +1,76 @@
+# create_irida_user
+# create a new IRIDA user account
+# requires admin token - use get_irida_token_admin first
+#
+# usage: create_irida_user USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]
+#
+# SYSTEM_ROLE: ROLE_ADMIN, ROLE_MANAGER, ROLE_USER, ROLE_TECHNICIAN, ROLE_SEQUENCER
+# PASSWORD:    auto-generated via pwgen, printed to stdout
+# PHONE:       optional, must be at least 4 characters if provided
+#
+# example: create_irida_user jdoe John Doe john.doe@vetinst.no ROLE_USER
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+create_irida_user() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { /usr/bin/printf "Missing username.\nusage: ${FUNCNAME[0]} USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]\n" ; return 1 ; }
+    [[ -z "${2}" ]] && { /usr/bin/printf "Missing first name.\nusage: ${FUNCNAME[0]} USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]\n" ; return 1 ; }
+    [[ -z "${3}" ]] && { /usr/bin/printf "Missing last name.\nusage: ${FUNCNAME[0]} USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]\n" ; return 1 ; }
+    [[ -z "${4}" ]] && { /usr/bin/printf "Missing email.\nusage: ${FUNCNAME[0]} USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]\n" ; return 1 ; }
+    [[ -z "${5}" ]] && { /usr/bin/printf "Missing system role.\nusage: ${FUNCNAME[0]} USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]\n" ; return 1 ; }
+    [[ "${5}" != "ROLE_ADMIN" && "${5}" != "ROLE_MANAGER" && "${5}" != "ROLE_USER" && "${5}" != "ROLE_TECHNICIAN" && "${5}" != "ROLE_SEQUENCER" ]] && { echo "invalid systemRole: ${5} (ROLE_ADMIN|ROLE_MANAGER|ROLE_USER|ROLE_TECHNICIAN|ROLE_SEQUENCER)" ; return 1 ; }
+    if [[ -x /usr/bin/toilet ]]; then
+        /usr/bin/toilet -f term --filter border "Reminder: admin credentials required" >&2
+    else
+        echo "WARNING: admin credentials required" >&2
+    fi
+    local _password _password_encoded
+    _password=$( /usr/bin/pwgen --capitalize --numerals --symbols --secure --ambiguous 16 1 )
+    _password_encoded=$( /usr/bin/urlencode "${_password}" )
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg un "${1}" --arg fn "${2}" --arg ln "${3}" --arg em "${4}" --arg sr "${5}" --arg ph "${6:-}" --arg pw "${_password_encoded}" '{"username": $un, "firstName": $fn, "lastName": $ln, "email": $em, "systemRole": $sr, "password": $pw, "locale": "en"} | if $ph != "" then . + {"phoneNumber": $ph} else . end' )" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        201) echo "${_response}" | /usr/bin/jq '{id: (.resource.identifier | tonumber), username: .resource.username, firstName: .resource.firstName, lastName: .resource.lastName, email: .resource.email, role: .resource.systemRole, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat
+             echo "password: ${_password}" ;;
+        400) echo "ERROR: bad request - $( echo "${_response}" | /usr/bin/jq -r '.message // .' )" >&2 ; return 1 ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden - admin token required" >&2 ; return 1 ;;
+        409) echo "ERROR: conflict - username or email already exists" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+
+# tab completion for create_irida_user SYSTEM_ROLE (arg 5)
+_irida_create_user_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        5)  COMPREPLY=( $(compgen -W "ROLE_ADMIN ROLE_MANAGER ROLE_USER ROLE_TECHNICIAN ROLE_SEQUENCER" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        6)  COMPREPLY=( '""' ) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
+complete -F _irida_create_user_complete create_irida_user
+
+# NOTE: POST /api/users returns 403 as non-admin. Admin token required.
+# Password is auto-generated via pwgen and printed to stdout in plaintext.
+# Operator must communicate the password to the new user securely.
+# locale is hardcoded to "en" - NVI standard.
+# phoneNumber is optional - omitted from payload if not provided.
