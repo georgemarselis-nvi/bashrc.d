@@ -1,0 +1,56 @@
+# delete_irida_user_from_project
+# remove a user from an IRIDA project
+#
+# usage: delete_irida_user_from_project PROJECT_ID USERNAME
+#
+# NOTE: any authenticated project member can remove users via the API.
+#       The web UI restricts this to project managers only. RBAC gap.
+# NOTE: DELETE /api/projects/{id}/users/{username} confirmed working as
+#       non-admin on VIGASP 23.01.3.
+#
+# example: delete_irida_user_from_project 150:test_gmarselis rakuip:Raoul_Valentin_Kuiper
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+delete_irida_user_from_project() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} PROJECT_ID USERNAME\n" ; return 1 ; }
+    [[ -z "${2}" ]] && { /usr/bin/printf "Missing username.\nusage: ${FUNCNAME[0]} PROJECT_ID USERNAME\n" ; return 1 ; }
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/users/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    case "${_http_code}" in
+        200) echo "user ${2%%:*} removed from project ${1%%:*}" ;;
+        403) echo "ERROR: forbidden - not a member of project ${1%%:*}" >&2 ; return 1 ;;
+        404) echo "ERROR: user ${2%%:*} or project ${1%%:*} not found" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+
+# tab completion for delete_irida_user_from_project: PROJECT_ID (arg 1), USERNAME from project members (arg 2)
+_irida_delete_user_from_project_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        2)  local project_id="${COMP_WORDS[1]%%:*}"
+            local IFS=$'\n'
+            mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.username):\(.firstName | gsub(" "; "_"))_\(.lastName | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
+complete -o nosort -F _irida_delete_user_from_project_complete delete_irida_user_from_project
