@@ -25,12 +25,23 @@ get_irida_token() {
     export IRIDA_TOKEN=null
     local BW_URL="http://127.0.0.1:8087"
     local BW_ITEM="772acf18-2e78-44a9-9fb8-b41500c8c864"
-    local BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
-    local USERNAME=$(      echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username' )
-    local PASSWORD=$(      /usr/bin/urlencode $( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password' ) )
-    local CLIENT_ID=$(     echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
-    local CLIENT_SECRET=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^token:'     | /usr/bin/sed 's/^token://'     )
-    export IRIDA_TOKEN=$(  /usr/bin/curl --silent -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token')
+    local BW_DATA
+    BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
+    [[ $( echo "${BW_DATA}" | /usr/bin/jq -r '.success' ) != "true" ]] && { echo "ERROR: failed to retrieve Bitwarden item ${BW_ITEM}" >&2 ; return 1 ; }
+    local USERNAME=$(      echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username'                                               | /usr/bin/tr -d '\r' )
+    local PASSWORD=$(      /usr/bin/urlencode $( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password'                         | /usr/bin/tr -d '\r' ) )
+    local CLIENT_ID=$(     echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^client_id:' | /usr/bin/sed 's/^client_id://'  | /usr/bin/tr -d '\r' )
+    local CLIENT_SECRET=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^token:'     | /usr/bin/sed 's/^token://'      | /usr/bin/tr -d '\r' )
+    local _token_response _http_code
+    _token_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" )
+    _http_code=$( echo "${_token_response}" | /usr/bin/tail -1 )
+    _token_response=$( echo "${_token_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) export IRIDA_TOKEN=$( echo "${_token_response}" | /usr/bin/jq -r '.access_token' ) ;;
+        400) echo "ERROR: HTTP 400 - bad credentials" >&2 ; return 1 ;;
+        401) echo "ERROR: HTTP 401 - unauthorized" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
 }
 
 # turn off tab completing as a hint to the user

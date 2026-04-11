@@ -4,7 +4,7 @@
 #
 # example: get_irida_token_admin && echo "token: ${IRIDA_TOKEN}"
 #
-# WARNING: this exports IRIDA_TOKEN — it will overwrite any existing token.
+# WARNING: this exports IRIDA_TOKEN - it will overwrite any existing token.
 # use get_irida_token to revert to the non-admin account.
 #
 # Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
@@ -27,8 +27,6 @@ get_irida_token_admin() {
     fi
     local _skip_countdown=0
     [[ "${1}" == "--skip-countdown" ]] && _skip_countdown=1
-
-
     if [[ "${_skip_countdown}" -eq 0 ]]; then
         echo "  You are about to authenticate as the IRIDA admin account." >&2
         echo "  IRIDA_TOKEN will be overwritten. Use get_irida_token to revert." >&2
@@ -41,22 +39,30 @@ get_irida_token_admin() {
         printf "\r         \r" >&2
         echo "" >&2
     fi
-
     check_bitwarden_serve || { /usr/bin/printf "bw-serve.service not running; start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh\n" ; return 1 ; }
     # DO NOT ADD A CHECK FOR THE TOKEN HERE. WE ARE GENERATING THE TOKEN NOW.
     check_irida_connectivity || return 1
-
     export IRIDA_TOKEN=null
     local BW_URL="http://127.0.0.1:8087"
     local BW_ITEM="fab1520e-3188-47d3-b1d0-b42400d6ade0"
-    local BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
-    local USERNAME=$(      echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username' )
-    local PASSWORD=$(      /usr/bin/urlencode $( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password' ) )
-    local CLIENT_ID=$(     echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^client_id:' | /usr/bin/sed 's/^client_id://' )
-    local CLIENT_SECRET=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^token:'     | /usr/bin/sed 's/^token://'     )
-    export IRIDA_TOKEN=$(  /usr/bin/curl --silent -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" | /usr/bin/jq -r '.access_token' )
+    local BW_DATA
+    BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
+    [[ $( echo "${BW_DATA}" | /usr/bin/jq -r '.success' ) != "true" ]] && { echo "ERROR: failed to retrieve Bitwarden item ${BW_ITEM}" >&2 ; return 1 ; }
+    local USERNAME=$(      echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username'                                               | /usr/bin/tr -d '\r' )
+    local PASSWORD=$(      /usr/bin/urlencode $( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password'                         | /usr/bin/tr -d '\r' ) )
+    local CLIENT_ID=$(     echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^client_id:' | /usr/bin/sed 's/^client_id://'  | /usr/bin/tr -d '\r' )
+    local CLIENT_SECRET=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^token:'     | /usr/bin/sed 's/^token://'      | /usr/bin/tr -d '\r' )
+    local _token_response _http_code
+    _token_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" )
+    _http_code=$( echo "${_token_response}" | /usr/bin/tail -1 )
+    _token_response=$( echo "${_token_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) export IRIDA_TOKEN=$( echo "${_token_response}" | /usr/bin/jq -r '.access_token' ) ;;
+        400) echo "ERROR: HTTP 400 - bad credentials" >&2 ; return 1 ;;
+        401) echo "ERROR: HTTP 401 - unauthorized" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
 }
 
 # no tab completion - function takes no arguments
 complete get_irida_token_admin
-
