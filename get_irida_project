@@ -24,11 +24,19 @@
 get_irida_project() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID" ; return 1 ; }
-    local response
-    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-    [[ -z "${response}" ]] && { echo "project ${1%%:*} not found" ; return 1 ; }
-    echo "${response}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.name, description: .resource.projectDescription, organism: .resource.organism, genome_size: .resource.genomeSize, min_coverage: .resource.minimumCoverage, max_coverage: .resource.maximumCoverage, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.resource.modifiedDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID" >&2 ; return 1 ; }
+    local _http_code
+    local _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1  )
+    _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) echo "${_response}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.name, description: .resource.projectDescription, organism: .resource.organism, genome_size: .resource.genomeSize, min_coverage: .resource.minimumCoverage, max_coverage: .resource.maximumCoverage, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.resource.modifiedDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat ;;
+        403) echo "ERROR: HTTP 403 - project ${1%%:*} access denied" >&2 ; return 1 ;;
+        404) echo "ERROR: HTTP 404 - project ${1%%:*} not found" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
 }
 
 complete -F _irida_projects_complete get_irida_project
