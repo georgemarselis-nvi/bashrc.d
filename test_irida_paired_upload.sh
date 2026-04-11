@@ -1,4 +1,25 @@
-#!/usr/bin/env /usr/bin/bash
+#!/usr/bin/env bash
+# test_irida_paired_upload.sh
+# test paired-end file upload to IRIDA via POST /api/samples/{id}/pairs
+# uploads 2024_EQA13.Strain0020_R1/R2_001.fastq to sample 11745 in project 150
+#
+# PREREQUISITE: sequencing run 801 must be in UPLOADING state before running this script.
+# run:
+#   change_irida_sequencing_run 801 UPLOADING
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 BOUNDARY="B0undary"
 PARAMS='{"miseqRunId":"801","layoutType":"PAIRED_END"}'
@@ -13,7 +34,10 @@ R2="/home/gmarselis/.bashrc.d/test_output/2024_EQA13.Strain0020_R2_001.fastq"
   printf -- "\r\n--%s\r\nContent-Disposition: form-data; name=\"parameters1\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${BOUNDARY}" "${PARAMS}"
   printf -- "--%s\r\nContent-Disposition: form-data; name=\"parameters2\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${BOUNDARY}" "${PARAMS}"
   printf -- "--%s--\r\n" "${BOUNDARY}"
-} | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/11745/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${BOUNDARY}" --data-binary @-
+} | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/11745/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${BOUNDARY}" --data-binary @- \
+  | /usr/bin/head -n -1 \
+  | /usr/bin/jq '{pair_id: .resource.identifier, label: .resource.label, processingState: .resource.processingState, r1_id: .resource.forwardSequenceFile.identifier, r1_file: .resource.forwardSequenceFile.fileName, r1_size: .resource.forwardSequenceFile.fileSizeBytes, r1_sha256: .resource.forwardSequenceFile.uploadSha256, r2_id: .resource.reverseSequenceFile.identifier, r2_file: .resource.reverseSequenceFile.fileName, r2_size: .resource.reverseSequenceFile.fileSizeBytes, r2_sha256: .resource.reverseSequenceFile.uploadSha256, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d"))}' \
+  | /usr/bin/mlr --ijson --opprint cat
 echo
 
 # NOTE: the correct endpoint for paired-end upload is /api/samples/{id}/pairs, not
