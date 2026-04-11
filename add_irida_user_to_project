@@ -1,0 +1,73 @@
+# add_irida_user_to_project
+# add a user to an IRIDA project
+# any authenticated user who is a member of the project can add users
+#
+# usage: add_irida_user_to_project USERNAME PROJECT_ID ROLE [METADATA_ROLE]
+#
+# ROLE:          PROJECT_USER (Collaborator) or PROJECT_OWNER (Manager)
+# METADATA_ROLE: LEVEL_1 through LEVEL_4 (optional, defaults to LEVEL_1)
+#
+# NOTE: IRIDA does not validate the role field - invalid values are silently
+#       accepted and default to PROJECT_USER / LEVEL_1
+# NOTE: any authenticated user who is a member of the project can add any
+#       system user to the project via the API. The web UI restricts this
+#       to project managers only. This is an RBAC gap.
+#
+# example: add_irida_user_to_project rakuip:Raoul_Valentin_Kuiper 150:test_gmarselis PROJECT_USER LEVEL_1
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+add_irida_user_to_project() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { /usr/bin/printf "Missing username.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
+    [[ -z "${2}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
+    [[ -z "${3}" ]] && { /usr/bin/printf "Missing role.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
+    [[ "${3}" != "PROJECT_USER" && "${3}" != "PROJECT_OWNER" ]] && { echo "invalid role: ${3} (PROJECT_USER|PROJECT_OWNER)" ; return 1 ; }
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${2%%:*}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg un "${1%%:*}" --arg role "${3}" --arg mr "${4:-LEVEL_1}" '{"userId": $un, "role": $role, "metadataRole": $mr}' )" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        201) echo "${_response}" | /usr/bin/jq '{project: .resource.resource.subject.name, username: .resource.resource.object.username, role: .resource.resource.projectRole, metadataRole: .resource.resource.metadataRole, since: (.resource.resource.createdDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat ;;
+        403) echo "ERROR: forbidden - not a member of project ${2%%:*}" >&2 ; return 1 ;;
+        404) echo "ERROR: project ${2%%:*} not found" >&2 ; return 1 ;;
+        500) echo "ERROR: user ${1%%:*} not found or already a member" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+
+# tab completion for add_irida_user_to_project: USERNAME (arg 1) via _irida_users_complete,
+# PROJECT_ID (arg 2), ROLE (arg 3), METADATA_ROLE (arg 4)
+_irida_add_user_to_project_complete() {
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        1)  local IFS=$'\n'
+            mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.username):\(.firstName | gsub(" "; "_"))_\(.lastName | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ;;
+        2)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        3)  COMPREPLY=( $(compgen -W "PROJECT_USER PROJECT_OWNER" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        4)  COMPREPLY=( $(compgen -W "LEVEL_1 LEVEL_2 LEVEL_3 LEVEL_4" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
+complete -o nosort -F _irida_add_user_to_project_complete add_irida_user_to_project
+
+# NOTE: POST /api/projects/{id}/users confirmed working as non-admin on VIGASP 23.01.3.
+# Any project member can add any system user to the project via the API.
+# The web UI restricts this to project managers only - RBAC gap.
+# IRIDA does not validate the role field - invalid values silently default to PROJECT_USER/LEVEL_1.
+# Invalid userId returns HTTP 500 (UsernameNotFoundException not handled - known IRIDA bug).
+# metadataRole defaults to LEVEL_1 if not provided.
