@@ -1,11 +1,11 @@
 # change_irida_sequencing_run
 # update fields on an existing sequencing run via PATCH /api/sequencingrun/{id}
-# requires admin token - use get_irida_token_admin first
+# confirmed working as non-admin on VIGASP 23.01.3
 #
 # patchable fields: uploadStatus, description, layoutType, sequencerType
 # workflow is NOT patchable - it has no matching field on the SequencingRun bean
 #
-#  example: change_irida_sequencing_run [TAB for run id] 804:SequencingRun_2026-04-08 COMPLETE nextseq PAIRED_END "new description"
+# example: change_irida_sequencing_run [TAB for run id] 801:SequencingRun_2026-04-06 UPLOADING
 #
 # Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
 # This program is free software: you can redistribute it and/or modify
@@ -28,11 +28,6 @@ change_irida_sequencing_run() {
     [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid run ID: ${1%%:*}" ; return 1 ; }
     [[ -z "${2}" ]] && { /usr/bin/printf "Missing uploadStatus.\nusage: ${FUNCNAME[0]} RUN_ID UPLOAD_STATUS [SEQUENCER_TYPE] [LAYOUT_TYPE] [DESCRIPTION]\n" ; return 1 ; }
     [[ "${2}" != "UPLOADING" && "${2}" != "COMPLETE" && "${2}" != "ERROR" ]] && { echo "invalid uploadStatus: ${2} (UPLOADING|COMPLETE|ERROR)" ; return 1 ; }
-    if [[ -x /usr/bin/toilet ]]; then
-        /usr/bin/toilet -f term --filter border "WARNING: admin credentials required" >&2
-    else
-        echo "WARNING: admin credentials required" >&2
-    fi
     local _http_code _response
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/${1%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg us "${2}" --arg st "${3:-}" --arg lt "${4:-}" --arg desc "${5:-}" '{"uploadStatus": $us} | if $st != "" then . + {"sequencerType": $st} else . end | if $lt != "" then . + {"layoutType": $lt} else . end | if $desc != "" then . + {"description": $desc} else . end' )" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
@@ -41,7 +36,7 @@ change_irida_sequencing_run() {
         200) echo "sequencing run ${1%%:*} updated" ;;
         400) echo "ERROR: bad request - $(echo "${_response}" | /usr/bin/jq -r '.message')" >&2 ; return 1 ;;
         401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
-        403) echo "ERROR: forbidden - admin token required" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden" >&2 ; return 1 ;;
         404) echo "ERROR: sequencing run ${1%%:*} not found" >&2 ; return 1 ;;
         500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
         *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
@@ -53,3 +48,5 @@ complete -F _irida_change_sequence_run_complete change_irida_sequencing_run
 # NOTE: workflow is not patchable on SequencingRun - Bean property 'workflow' has no
 # matching field (InvalidPropertyException). Confirmed on VIGASP 23.01.3.
 # Patchable fields: uploadStatus, sequencerType, layoutType, description.
+# NOTE: PATCH /api/sequencingrun/{id} confirmed working as non-admin on VIGASP 23.01.3.
+# RBAC gap - see GitHub issue.
