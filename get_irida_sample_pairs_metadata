@@ -25,11 +25,20 @@ get_irida_sample_pairs_metadata() {
     check_irida_token        || return 1
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (you need the second argument, as well)" ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid sample ID: ${2%%:*}" ; return 1 ; }
-    local response
-    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${2%%:*}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-    [[ -z "${response}" ]] && { echo "sample ${2%%:*} not found" ; return 1 ; }
-    [[ $( echo "${response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "sample ${2%%:*} has no paired files" ; return 1 ; }
-    echo "${response}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, r1: .forwardSequenceFile.fileName, r1_id: .forwardSequenceFile.identifier, r1_size: .forwardSequenceFile.fileSizeBytes, r1_sha256: .forwardSequenceFile.uploadSha256, r2: .reverseSequenceFile.fileName, r2_id: .reverseSequenceFile.identifier, r2_size: .reverseSequenceFile.fileSizeBytes, r2_sha256: .reverseSequenceFile.uploadSha256, created: (.createdDate / 1000 | strftime("%Y-%m-%d"))}]' | /usr/bin/mlr --ijson --opprint cat
+    local _sample_id="${2%%:*}"
+    local _response
+    _response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    [[ -z "${_response}" ]] && { echo "sample ${_sample_id} not found" ; return 1 ; }
+    [[ $( echo "${_response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "sample ${_sample_id} has no paired files" ; return 1 ; }
+    local _pairs
+    _pairs=$( echo "${_response}" | /usr/bin/jq -r '.resource.resources[].identifier' )
+    local _results=()
+    for _pair_id in ${_pairs}; do
+        local _pair_response
+        _pair_response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/pairs/${_pair_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        _results+=( "$( echo "${_pair_response}" | /usr/bin/jq -c '{id: .resource.identifier, r1: .resource.forwardSequenceFile.fileName, r1_id: .resource.forwardSequenceFile.identifier, r1_size: .resource.forwardSequenceFile.fileSizeBytes, r1_sha256: .resource.forwardSequenceFile.uploadSha256, r2: .resource.reverseSequenceFile.fileName, r2_id: .resource.reverseSequenceFile.identifier, r2_size: .resource.reverseSequenceFile.fileSizeBytes, r2_sha256: .resource.reverseSequenceFile.uploadSha256, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), processingState: .resource.processingState}' )" )
+    done
+    printf '%s\n' "${_results[@]}" | /usr/bin/jq -s '.' | /usr/bin/mlr --ijson --opprint cat
 }
 
 complete -F _irida_samples_complete get_irida_sample_pairs_metadata
@@ -37,3 +46,5 @@ complete -F _irida_samples_complete get_irida_sample_pairs_metadata
 # NOTE: createdDate is on the pair object itself. forwardSequenceFile and reverseSequenceFile
 # each have their own createdDate and modifiedDate but the pair object only has createdDate.
 # modifiedDate is not available at the pair level.
+# NOTE: processingState is fetched via GET /api/samples/{id}/pairs/{pairId} - an undocumented
+# endpoint discovered during paired upload testing on 2026-04-11. One extra curl call per pair.
