@@ -1,0 +1,90 @@
+# delete_irida_user
+# delete an IRIDA user account permanently
+# requires admin token - use get_irida_token_admin first
+#
+# usage: delete_irida_user USERNAME [--confirm]
+#
+# --confirm: skip the confirmation prompt and countdown
+#
+# example: delete_irida_user kotopoulos
+# example: delete_irida_user kotopoulos --confirm
+#
+# NOTE: DELETE /api/users/ only accepts numeric IDs, not usernames.
+# Function resolves username to ID via GET /api/users/{username} before
+# deletion.
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+delete_irida_user() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} USERNAME [--confirm]" ; return 1 ; }
+    local _username _skip_confirm=0
+    _username="${1%%:*}"
+    [[ "${2}" == "--confirm" ]] && _skip_confirm=1
+
+    if [[ -x /usr/bin/toilet ]]; then
+        /usr/bin/toilet -f mono12 --filter border "WARNING" >&2
+    fi
+    echo    "  You are about to PERMANENTLY DELETE the user: ${_username}" >&2
+    echo    "  This action cannot be undone." >&2
+    echo    "  The user will be removed from all projects." >&2
+    echo    "  Requires admin token." >&2
+    echo "" >&2
+
+    if [[ "${_skip_confirm}" -eq 0 ]]; then
+        /usr/bin/printf "  Are you sure you want to delete user '%s'? [yes/N] " "${_username}" >&2
+        local _answer
+        read -r _answer
+        [[ "${_answer}" != "yes" && "${_answer}" != "y" ]] && { echo "Aborted." >&2 ; return 1 ; }
+        echo "" >&2
+        echo "  Deleting in 15 seconds. Press Ctrl+C to abort." >&2
+        for _i in $(seq 15 -1 1); do
+            printf "\r  %2d ... " "${_i}" >&2
+            sleep 1
+        done
+        printf "\r         \r" >&2
+        echo "" >&2
+    fi
+
+    local _user_id
+    _user_id=$( /usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg un "${_username}" '.resource.resources[] | select(.username == $un) | .identifier' ) 
+    [[ -z "${_user_id}" || "${_user_id}" == "null" ]] && { echo "ERROR: user ${_username} not found" >&2 ; return 1 ; }
+
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${_user_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    case "${_http_code}" in
+        200) echo "user ${_username} deleted" ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden - admin token required" >&2 ; return 1 ;;
+        404) echo "ERROR: user ${_username} not found" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+
+complete -o nosort -F _irida_users_complete delete_irida_user
+
+#
+# NOTE: DELETE /api/users/{id} requires admin token. Confirmed 200 on VIGASP 23.01.3.
+# The IRIDA web UI has no user deletion option - API only.
+# User is permanently deleted and removed from all projects.
+# Function resolves username to numeric ID before deletion.
+#
+# NOTE: users with enabled=false are not visible via GET /api/users/{username}
+# IRIDA loadUserByUsername only returns enabled users. Disabled users cannot be
+# deleted via this function.
+
