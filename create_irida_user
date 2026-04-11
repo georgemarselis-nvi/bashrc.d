@@ -33,6 +33,7 @@ create_irida_user() {
     [[ -z "${4}" ]] && { /usr/bin/printf "Missing email.\nusage: ${FUNCNAME[0]} USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]\n" ; return 1 ; }
     [[ -z "${5}" ]] && { /usr/bin/printf "Missing system role.\nusage: ${FUNCNAME[0]} USERNAME FIRSTNAME LASTNAME EMAIL SYSTEM_ROLE [PHONE]\n" ; return 1 ; }
     [[ "${5}" != "ROLE_ADMIN" && "${5}" != "ROLE_MANAGER" && "${5}" != "ROLE_USER" && "${5}" != "ROLE_TECHNICIAN" && "${5}" != "ROLE_SEQUENCER" ]] && { echo "invalid systemRole: ${5} (ROLE_ADMIN|ROLE_MANAGER|ROLE_USER|ROLE_TECHNICIAN|ROLE_SEQUENCER)" ; return 1 ; }
+    [[ -n "${6}" && ${#6} -lt 4 ]] && { echo "ERROR: phoneNumber must be at least 4 characters" >&2 ; return 1 ; }
     if [[ -x /usr/bin/toilet ]]; then
         /usr/bin/toilet -f term --filter border "Reminder: admin credentials required" >&2
     else
