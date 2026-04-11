@@ -30,46 +30,38 @@ create_irida_sample_in_project() {
     [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing description)" >&2 ; return 1 ; }
     [[ -z "${4}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing organism)" >&2 ; return 1 ; }
 
-    local project_id="${1%%:*}"
-    local sampleName="${2}"
-    local description="${3}"
-    local organism="${4}"
-    local isolate="${5}"
-    local strain="${6}"
-    local collectedBy="${7}"
-    local collectionDate="${8}"
-    local geographicLocationName="${9}"
-    local isolationSource="${10}"
-    local latitude="${11}"
-    local longitude="${12}"
+    local _project_id="${1%%:*}"
+    local _sampleName="${2}"
+    local _description="${3}"
+    local _organism="${4}"
+    local _isolate="${5}"
+    local _strain="${6}"
+    local _collectedBy="${7}"
+    local _collectionDate="${8}"
+    local _geographicLocationName="${9}"
+    local _isolationSource="${10}"
+    local _latitude="${11}"
+    local _longitude="${12}"
 
-    local json="{\"sampleName\":\"${sampleName}\",\"description\":\"${description}\",\"organism\":\"${organism}\""
-    [[ -n "${isolate}"                ]] && json+=",\"isolate\":\"${isolate}\""
-    [[ -n "${strain}"                 ]] && json+=",\"strain\":\"${strain}\""
-    [[ -n "${collectedBy}"            ]] && json+=",\"collectedBy\":\"${collectedBy}\""
-    [[ -n "${collectionDate}"         ]] && json+=",\"collectionDate\":\"${collectionDate}\""
-    [[ -n "${geographicLocationName}" ]] && json+=",\"geographicLocationName\":\"${geographicLocationName}\""
-    [[ -n "${isolationSource}"        ]] && json+=",\"isolationSource\":\"${isolationSource}\""
-    [[ -n "${latitude}"               ]] && json+=",\"latitude\":\"${latitude}\""
-    [[ -n "${longitude}"              ]] && json+=",\"longitude\":\"${longitude}\""
-    json+="}"
-
-    local response
-    local http_code
-    response=$( /usr/bin/curl --silent -w "\n%{http_code}" -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "${json}" )
-    http_code=$( echo "${response}" | tail -1 )
-    response=$( echo "${response}" | head -n -1 )
-    [[ "${http_code}" == "403" ]] && { echo "ERROR: HTTP 403 — not a member of project ${project_id} or insufficient permissions" >&2 ; return 1 ; }
-    [[ "${http_code}" == "404" ]] && { echo "ERROR: HTTP 404 — project ${project_id} not found" >&2 ; return 1 ; }
-    [[ "${http_code}" == "400" ]] && { echo "ERROR: HTTP 400 — bad request: $( echo "${response}" | /usr/bin/jq -r '.message // "unknown error"' )" >&2 ; return 1 ; }
-    [[ -z "${response}" ]] && { echo "ERROR: no response from server (HTTP ${http_code})" >&2 ; return 1 ; }
-    echo "${response}" | /usr/bin/jq '[.resource | {id: .identifier, sampleName: .sampleName, organism: .organism, description: .description, isolate: .isolate, strain: .strain, collectedBy: .collectedBy, collectionDate: .collectionDate, geographicLocationName: .geographicLocationName, isolationSource: .isolationSource, latitude: .latitude, longitude: .longitude, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), self: (.links[] | select(.rel == "self") | .href)}]' | /usr/bin/mlr --ijson --opprint cat
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg sn "${_sampleName}" --arg desc "${_description}" --arg org "${_organism}" --arg iso "${_isolate}" --arg str "${_strain}" --arg cb "${_collectedBy}" --arg cd "${_collectionDate}" --arg gln "${_geographicLocationName}" --arg is "${_isolationSource}" --arg lat "${_latitude}" --arg lon "${_longitude}" '{sampleName: $sn, description: $desc, organism: $org} | if $iso != "" then . + {isolate: $iso} else . end | if $str != "" then . + {strain: $str} else . end | if $cb != "" then . + {collectedBy: $cb} else . end | if $cd != "" then . + {collectionDate: $cd} else . end | if $gln != "" then . + {geographicLocationName: $gln} else . end | if $is != "" then . + {isolationSource: $is} else . end | if $lat != "" then . + {latitude: $lat} else . end | if $lon != "" then . + {longitude: $lon} else . end' )" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        201) echo "${_response}" | /usr/bin/jq '[.resource | {id: .identifier, sampleName: .sampleName, organism: .organism, description: .description, isolate: .isolate, strain: .strain, collectedBy: .collectedBy, collectionDate: .collectionDate, geographicLocationName: .geographicLocationName, isolationSource: .isolationSource, latitude: .latitude, longitude: .longitude, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d"))}]' | /usr/bin/mlr --ijson --opprint cat ;;
+        400) echo "ERROR: HTTP 400 - bad request: $( echo "${_response}" | /usr/bin/jq -r '.message // "unknown error"' )" >&2 ; return 1 ;;
+        403) echo "ERROR: HTTP 403 - not a member of project ${_project_id} or insufficient permissions" >&2 ; return 1 ;;
+        404) echo "ERROR: HTTP 404 - project ${_project_id} not found" >&2 ; return 1 ;;
+        409) echo "ERROR: HTTP 409 - sample name ${_sampleName} already exists in project ${_project_id}" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
 }
 
 complete -F _irida_projects_complete create_irida_sample_in_project
 
-# NOTE: All arguments are positional. Optional fields must be passed in order —
-# there is no picking and choosing. Pass an empty string "" as a placeholder
+# NOTE: All arguments are positional. Optional fields must be passed in order.
+# There is no picking and choosing. Pass an empty string "" as a placeholder
 # for any optional field you want to skip.
 
 # NOTE: IRIDA 23.01.3 rejects null strings for typed fields and returns HTTP 400
