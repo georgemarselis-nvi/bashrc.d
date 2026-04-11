@@ -146,4 +146,14 @@ _irida_change_sequence_run_complete() {
     esac
 }
 
+# tab completion for functions that take a USERNAME argument
+_irida_users_complete() {
+    check_irida_connectivity || return 1
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.username):\(.firstName | gsub(" "; "_"))_\(.lastName | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
 
