@@ -17,5 +17,5 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 check_irida_token() {
-    [[ -n "${IRIDA_TOKEN}" ]] || { echo "no IRIDA token - run get_irida_token first" ; return 1 ; }
+    [[ -n "${IRIDA_TOKEN}" && "${IRIDA_TOKEN}" != "null" ]] || { echo "no IRIDA token - run get_irida_token first" >&2 ; return 1 ; }
 }
