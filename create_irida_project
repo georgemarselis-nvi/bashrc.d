@@ -3,10 +3,10 @@
 #
 # usage: create_irida_project NAME DESCRIPTION ORGANISM
 #
-# WARNING: this function only ECHOES the curl command. it does NOT execute it.
-# copy and run the output manually after verifying the parameters.
-#
 # example: create_irida_project ZZTEST_API_DO_NOT_USE "THIS IS A TEST PROJECT DELETE ME" "Bigfoot norvegicus"
+#
+# NOTE: POST /api/projects confirmed working as non-admin on VIGASP 23.01.3.
+# Any authenticated user can create a project. RBAC gap - see GitHub issue.
 #
 # Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
 # This program is free software: you can redistribute it and/or modify
@@ -28,14 +28,28 @@ create_irida_project() {
     [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} NAME DESCRIPTION ORGANISM" >&2 ; return 1 ; }
     [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} NAME DESCRIPTION ORGANISM" >&2 ; return 1 ; }
     [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} NAME DESCRIPTION ORGANISM" >&2 ; return 1 ; }
-
-    local _name="${1}"
-    local _desc="${2}"
-    local _organism="${3}"
-
-    echo "# IRIDA will create a new project. verify parameters before running."
-    echo "/usr/bin/curl --silent -X POST \"http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects\" -H \"Authorization: Bearer \${IRIDA_TOKEN}\" -H \"Content-Type: application/json\" -d '{\"name\":\"${_name}\",\"projectDescription\":\"${_desc}\",\"organism\":\"${_organism}\"}' | /usr/bin/jq '[.resource | {id: .identifier, name: .name, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime(\"%Y-%m-%d\")), modified: (.modifiedDate / 1000 | strftime(\"%Y-%m-%d\")), self: (.links[] | select(.rel == \"self\") | .href)}]' | /usr/bin/mlr --ijson --opprint cat"
-    echo ""
-    echo "# expected response (example from test run 2026-04-05, project 154):"
-    /usr/bin/jq '[.resource | {id: .identifier, name: .name, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), self: (.links[] | select(.rel == "self") | .href)}]' < "${HOME}/.bashrc.d/test_output/create_project.json" | /usr/bin/mlr --ijson --opprint cat
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg name "${1}" --arg desc "${2}" --arg org "${3}" '{"name": $name, "projectDescription": $desc, "organism": $org}' )" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        201) echo "${_response}" | /usr/bin/jq '[.resource | {id: .identifier, name: .name, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), self: (.links[] | select(.rel == "self") | .href)}]' | /usr/bin/mlr --ijson --opprint cat ;;
+        400) echo "ERROR: bad request - $( echo "${_response}" | /usr/bin/jq -r '.message // "unknown error"' )" >&2 ; return 1 ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden" >&2 ; return 1 ;;
+        409) echo "ERROR: conflict - project name already exists" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
 }
+
+_irida_create_project_complete() {
+    check_irida_connectivity || return 1
+    case ${COMP_CWORD} in
+        3)  local IFS=$'\n'
+            mapfile -t COMPREPLY < <(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | .organism // empty' | /usr/bin/sort -u )" -- "${COMP_WORDS[COMP_CWORD]}") ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
+complete -o nosort -F _irida_create_project_complete create_irida_project
