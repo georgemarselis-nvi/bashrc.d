@@ -203,8 +203,10 @@ https://figshare.com/articles/dataset/Example_dataset_containing_Fast5_and_BAM_f
 
 Delter: https://github.com/nkuyfq/Delter
 
-sha256: 41b81c81f9a30d0acc7ff365347140926b0ac0e31d22fc5516a3821b1cf7be72
-sha512: 083e579f4bb1f46d1684dbf93d75dec83d6cbba179b27cbf12f6bc6fb54832e3188eeeaa6dfefb38b6bb1013d7be5c383d34335f3e36d05f3d91077ccec9613e
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------|
+| sha256 | 41b81c81f9a30d0acc7ff365347140926b0ac0e31d22fc5516a3821b1cf7be72                                                                 |
+| sha512 | 083e579f4bb1f46d1684dbf93d75dec83d6cbba179b27cbf12f6bc6fb54832e3188eeeaa6dfefb38b6bb1013d7be5c383d34335f3e36d05f3d91077ccec9613e |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------|
 
 ---
 ## License
