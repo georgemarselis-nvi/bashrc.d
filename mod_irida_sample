@@ -1,0 +1,99 @@
+# mod_irida_sample
+# update fields on an existing IRIDA sample via PATCH /api/samples/{id}
+# confirmed working as non-admin on VIGASP 23.01.3 - RBAC gap, see GitHub issue #12
+#
+# usage: mod_irida_sample PROJECT_ID SAMPLE_ID [--name NAME] [--description DESC] [--organism ORG]
+#                         [--isolate ISOLATE] [--strain STRAIN] [--collected-by COLLECTED_BY]
+#                         [--collection-date DATE] [--location LOCATION] [--isolation-source SOURCE]
+#                         [--latitude LAT] [--longitude LON]
+#
+# at least one optional field must be provided
+#
+# example: mod_irida_sample 150:test_gmarselis 11745:ZZTEST_SAMPLE_DO_NOT_USE --description "new description"
+#
+# NOTE: PATCH /api/samples/{id} response links reveal that sample/sequenceFiles/pairs
+# resolves to /api/samples/{id}/pairs - confirming the undocumented paired upload endpoint.
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+mod_irida_sample() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID [--name NAME] [--description DESC] [--organism ORG] [--isolate ISOLATE] [--strain STRAIN] [--collected-by COLLECTED_BY] [--collection-date DATE] [--location LOCATION] [--isolation-source SOURCE] [--latitude LAT] [--longitude LON]" >&2 ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
+    [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
+    local _sample_id="${2%%:*}"
+    shift 2
+    local _name _description _organism _isolate _strain _collected_by _collection_date _location _isolation_source _latitude _longitude
+    while [[ $# -gt 0 ]]; do
+        case "${1}" in
+            --name)             _name="${2}"             ; shift 2 ;;
+            --description)      _description="${2}"      ; shift 2 ;;
+            --organism)         _organism="${2}"         ; shift 2 ;;
+            --isolate)          _isolate="${2}"          ; shift 2 ;;
+            --strain)           _strain="${2}"           ; shift 2 ;;
+            --collected-by)     _collected_by="${2}"     ; shift 2 ;;
+            --collection-date)  _collection_date="${2}"  ; shift 2 ;;
+            --location)         _location="${2}"         ; shift 2 ;;
+            --isolation-source) _isolation_source="${2}" ; shift 2 ;;
+            --latitude)         _latitude="${2}"         ; shift 2 ;;
+            --longitude)        _longitude="${2}"        ; shift 2 ;;
+            *) echo "ERROR: unknown option: ${1}" >&2 ; return 1 ;;
+        esac
+    done
+    [[ -z "${_name}${_description}${_organism}${_isolate}${_strain}${_collected_by}${_collection_date}${_location}${_isolation_source}${_latitude}${_longitude}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn \
+        --arg name "${_name:-}" \
+        --arg desc "${_description:-}" \
+        --arg org  "${_organism:-}" \
+        --arg iso  "${_isolate:-}" \
+        --arg str  "${_strain:-}" \
+        --arg cb   "${_collected_by:-}" \
+        --arg cd   "${_collection_date:-}" \
+        --arg loc  "${_location:-}" \
+        --arg is   "${_isolation_source:-}" \
+        --arg lat  "${_latitude:-}" \
+        --arg lon  "${_longitude:-}" \
+        '{}
+        | if $name != "" then . + {"sampleName": $name} else . end
+        | if $desc != "" then . + {"description": $desc} else . end
+        | if $org  != "" then . + {"organism": $org} else . end
+        | if $iso  != "" then . + {"isolate": $iso} else . end
+        | if $str  != "" then . + {"strain": $str} else . end
+        | if $cb   != "" then . + {"collectedBy": $cb} else . end
+        | if $cd   != "" then . + {"collectionDate": $cd} else . end
+        | if $loc  != "" then . + {"geographicLocationName": $loc} else . end
+        | if $is   != "" then . + {"isolationSource": $is} else . end
+        | if $lat  != "" then . + {"latitude": $lat} else . end
+        | if $lon  != "" then . + {"longitude": $lon} else . end' )" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) echo "${_response}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.sampleName, description: .resource.description, organism: .resource.organism, isolate: .resource.isolate, strain: .resource.strain, collected_by: .resource.collectedBy, collection_date: (if .resource.collectionDate then (.resource.collectionDate / 1000 | strftime("%Y-%m-%d")) else null end), location: .resource.geographicLocationName, isolation_source: .resource.isolationSource, latitude: .resource.latitude, longitude: .resource.longitude, modified: (.resource.modifiedDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat ;;
+        400) echo "ERROR: HTTP 400 - bad request: $( echo "${_response}" | /usr/bin/jq -r '.message // "unknown error"' )" >&2 ; return 1 ;;
+        403) echo "ERROR: HTTP 403 - access denied" >&2 ; return 1 ;;
+        404) echo "ERROR: HTTP 404 - sample ${_sample_id} not found" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+
+complete -F _irida_samples_complete mod_irida_sample
+
+# NOTE: PATCH /api/samples/{id} confirmed working as non-admin on VIGASP 23.01.3.
+# Any authenticated user can patch any sample they have access to. RBAC gap - see GitHub issue #12.
+# NOTE: PATCH /api/samples/{id} response links confirm that sample/sequenceFiles/pairs
+# resolves to /api/samples/{id}/pairs - the undocumented paired upload endpoint.
