@@ -1,0 +1,60 @@
+# check_irida_sequencing_run_upload_status
+# check the upload status of a sequencing run
+# lightweight wrapper - no WARNING, no countdown
+#
+# NOTE: this function is essentially a duplicate of get_irida_sequence_run with a single ID.
+#       it is included here for scripting clarity and completeness.
+#
+# example:
+#   check_irida_sequencing_run_upload_status 801
+#   check_irida_sequencing_run_upload_status 801:SequencingRun_2026-04-06
+#
+# NOTE: non-admin users will only see sequencing runs they created.
+#       admin users see all runs. Use get_irida_token_admin to see all runs.
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+check_irida_sequencing_run_upload_status() {
+    echo "NOTE: ${FUNCNAME[0]} is a wrapper around get_irida_sequence_run for scripting clarity" >&2
+    [[ -z "${1}" ]] && { /usr/bin/printf "Missing run ID.\nusage: ${FUNCNAME[0]} RUN_ID\n" >&2 ; return 1 ; }
+    [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid run ID: ${1%%:*}" >&2 ; return 1 ; }
+
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+
+    local _id="${1%%:*}"
+    local _response _http_code
+
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' \
+        -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/${_id}" \
+        -H "Authorization: Bearer ${IRIDA_TOKEN}" \
+        -H "Accept: application/json" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+
+    case "${_http_code}" in
+        200) ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+        404) echo "ERROR: sequencing run ${_id} not found"        >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error"            >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"          >&2 ; return 1 ;;
+    esac
+
+    [[ $( echo "${_response}" | /usr/bin/jq -r '.resource.identifier // "null"' ) == "null" ]] && { echo "ERROR: sequencing run ${_id} not found" >&2 ; return 1 ; }
+
+    echo "${_response}" | /usr/bin/jq '[.resource | {id: (.identifier | tonumber), workflow: .workflow, label: .label, sequencerType: .sequencerType, layoutType: .layoutType, uploadStatus: .uploadStatus, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), description: .description}]' | /usr/bin/mlr --ijson --opprint cat
+}
+
+complete -F _irida_sequence_run_complete check_irida_sequencing_run_upload_status
