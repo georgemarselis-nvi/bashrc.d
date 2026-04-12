@@ -39,3 +39,7 @@ complete -F _irida_samples_complete get_irida_sample_files_metadata
 # NOTE: /api/samples/{id}/sequenceFiles returns both paired and unpaired files but does not
 # surface the pair identifier. To get the pair_id needed for get_irida_download_sequence_file,
 # call get_irida_sample_pairs_metadata separately.
+#
+# NOTE: sizeMB is calculated as fileSizeBytes / 1048576 | floor. Files smaller than 1MB
+# will show sizeMB as 0. Use get_irida_sample_files_metadata for byte-level accuracy if needed,
+# or check fileSizeBytes directly via the raw API response.

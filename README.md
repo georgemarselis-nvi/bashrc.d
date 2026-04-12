@@ -195,6 +195,17 @@ retrieved with garbled encoding. The terminal is UTF-8; the corruption originate
 
 ---
 
+## Test Data
+
+The fast5 test file `test_output/f6dee372-3d33-45e8-8557-7f549f5bca71.fast5` is from the
+"Example dataset containing Fast5 and BAM files" dataset published on figshare by the Delter project.
+https://figshare.com/articles/dataset/Example_dataset_containing_Fast5_and_BAM_files/26093869
+Delter: https://github.com/nkuyfq/Delter
+
+sha256: 41b81c81f9a30d0acc7ff365347140926b0ac0e31d22fc5516a3821b1cf7be72
+sha512: 083e579f4bb1f46d1684dbf93d75dec83d6cbba179b27cbf12f6bc6fb54832e3188eeeaa6dfefb38b6bb1013d7be5c383d34335f3e36d05f3d91077ccec9613e
+
+---
 ## License
 
 Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
@@ -202,3 +213,5 @@ Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
 This program is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation, either
 version 3 of the License, or (at your option) any later version.
+
+
