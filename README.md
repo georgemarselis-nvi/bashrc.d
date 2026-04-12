@@ -87,7 +87,7 @@ get_irida_token_admin
 | `get_irida_download_sequence_pair` | download both R1 and R2 for a sample pair                                                                       |
 | `upload_irida_fastq_pair`          | upload a paired-end fastq pair to a sample via `POST /api/samples/{id}/pairs`. Confirmed working as non-admin (RBAC gap, see issue #12). Sequencing run must be in UPLOADING state. |
 | `upload_irida_fast5`               | upload a fast5 file to a sample via `POST /api/samples/{id}/fast5`. Confirmed working as non-admin (RBAC gap, see issue #12). |
-| `delete_irida_sequence_file`       | stub only. `DELETE /api/samples/{id}/sequenceFiles/{fileId}` is broken on VIGASP 23.01.3 (NullPointerException, see issue #4). |
+| `delete_irida_sequence_file`       | delete a sequencing object from a sample via `DELETE /api/samples/{id}/{objectType}/{objectId}`. objectType: unpaired, pairs, fast5. objectId is the sequencing object ID, not the file ID. Confirmed working as non-admin (RBAC gap, see issue #12). NOTE: the documented path `DELETE /api/samples/{id}/sequenceFiles/{fileId}` is wrong and returns 500 (see issue #4). |
 
 ### Sequencing runs
 
