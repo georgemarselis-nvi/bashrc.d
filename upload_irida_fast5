@@ -1,0 +1,62 @@
+# upload_irida_fast5
+# upload a fast5 file to a sample in IRIDA
+#
+# usage: upload_irida_fast5 PROJECT_ID SAMPLE_ID FILE_PATH
+#
+# NOTE: endpoint is /api/samples/{id}/fast5, not /api/samples/{id}/sequenceFiles/fast5.
+# Confirmed working as non-admin on VIGASP 23.01.3. RBAC gap - see GitHub issue #12.
+#
+# example: upload_irida_fast5 150:test_gmarselis 11745:ZZTEST_SAMPLE_DO_NOT_USE /path/to/file.fast5
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+upload_irida_fast5() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID FILE_PATH" >&2 ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID FILE_PATH (missing SAMPLE_ID)" >&2 ; return 1 ; }
+    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID FILE_PATH (missing FILE_PATH)" >&2 ; return 1 ; }
+    [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
+    [[ ! -f "${3}" ]] && { echo "ERROR: file not found: ${3}" >&2 ; return 1 ; }
+    [[ "${3}" != *.fast5 ]] && { echo "ERROR: file does not have .fast5 extension: ${3}" >&2 ; return 1 ; }
+    local _sample_id="${2%%:*}"
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/fast5" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@${3}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        201) echo "${_response}" | /usr/bin/jq '{id: .resource.identifier, file: .resource.fileName, size: .resource.fileSizeBytes, sha256: .resource.uploadSha256, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat ;;
+        400) echo "ERROR: HTTP 400 - bad request: $( echo "${_response}" | /usr/bin/jq -r '.message // "unknown error"' )" >&2 ; return 1 ;;
+        403) echo "ERROR: HTTP 403 - access denied" >&2 ; return 1 ;;
+        404) echo "ERROR: HTTP 404 - sample ${_sample_id} not found" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+
+_irida_upload_fast5_complete() {
+    case ${COMP_CWORD} in
+        1)  check_irida_connectivity || return 1
+            COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        2)  check_irida_connectivity || return 1
+            COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+            local _project_id="${COMP_WORDS[1]%%:*}"
+            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
+complete -o nosort -o default -F _irida_upload_fast5_complete upload_irida_fast5
