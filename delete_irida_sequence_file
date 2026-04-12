@@ -1,13 +1,20 @@
 # delete_irida_sequence_file
-# delete a sequence file from a sample in IRIDA
+# delete a sequencing object from a sample in IRIDA
 #
-# usage: delete_irida_sequence_file SAMPLE_ID FILE_ID
+# usage: delete_irida_sequence_file PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID
 #
-# NOTE: DELETE /api/samples/{id}/sequenceFiles/{fileId} is BROKEN on IRIDA 23.01.3.
-# Returns HTTP 500 NullPointerException in SequencingObjectServiceImpl.readSequencingObjectForSample
-# regardless of file type (fastq, fast5) and regardless of admin or non-admin token.
-# See GitHub issue #4 for full stack trace.
-# Files can be deleted via the IRIDA web UI.
+# OBJECT_TYPE: unpaired | pairs | fast5
+# OBJECT_ID: sequencing object ID (not the file ID)
+#
+# NOTE: the documented path DELETE /api/samples/{id}/sequenceFiles/{fileId} is wrong.
+# The correct path is DELETE /api/samples/{sampleId}/{objectType}/{objectId}.
+# The documented path passes a file ID where a sequencing object ID is expected,
+# causing a NullPointerException in readSequencingObjectForSample. Root cause confirmed
+# from RESTSampleSequenceFilesController.java line 696. See GitHub issue #4.
+#
+# NOTE: confirmed working as non-admin on VIGASP 23.01.3. RBAC gap - see GitHub issue #12.
+#
+# example: delete_irida_sequence_file 150:test_gmarselis 11745:ZZTEST_SAMPLE_DO_NOT_USE unpaired 11998
 #
 # Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
 # This program is free software: you can redistribute it and/or modify
@@ -24,12 +31,31 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 delete_irida_sequence_file() {
-    echo "ERROR: DELETE /api/samples/{id}/sequenceFiles/{fileId} is broken on IRIDA 23.01.3." >&2
-    echo "       Returns HTTP 500 NullPointerException regardless of file type or token." >&2
-    echo "       Use the IRIDA web UI to delete sequence files." >&2
-    echo "       See GitHub issue #4 for details." >&2
-    return 1
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ -z "${2}" ]] && { /usr/bin/printf "Missing sample ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ -z "${3}" ]] && { /usr/bin/printf "Missing OBJECT_TYPE.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ -z "${4}" ]] && { /usr/bin/printf "Missing OBJECT_ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
+    [[ ! "${4%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid object ID: ${4%%:*}" >&2 ; return 1 ; }
+    [[ "${3}" != "unpaired" && "${3}" != "pairs" && "${3}" != "fast5" ]] && { echo "ERROR: invalid object type: ${3} (unpaired|pairs|fast5)" >&2 ; return 1 ; }
+    local _sample_id="${2%%:*}"
+    local _object_id="${4%%:*}"
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' \
+        -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/${3}/${_object_id}" \
+        -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) echo "sequencing object ${_object_id} (${3}) deleted from sample ${_sample_id}" ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+        404) echo "ERROR: sample ${_sample_id} or object ${_object_id} not found" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error (check object type and object ID - not file ID)" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"          >&2 ; return 1 ;;
+    esac
 }
 
-# no tab completion - function is not operational
-complete delete_irida_sequence_file
+complete -F _irida_samples_complete delete_irida_sequence_file
