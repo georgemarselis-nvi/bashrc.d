@@ -54,7 +54,7 @@ _irida_analysis_complete() {
             local analyses
             analyses=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' 2>/dev/null )
             if [[ -z "${analyses}" ]]; then
-                COMPREPLY=( "no_analyses_found" )
+                COMPREPLY=()
             else
                 mapfile -t COMPREPLY < <(compgen -W "${analyses}" -- "${COMP_WORDS[COMP_CWORD]}")
             fi ;;
