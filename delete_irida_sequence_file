@@ -1,0 +1,35 @@
+# delete_irida_sequence_file
+# delete a sequence file from a sample in IRIDA
+#
+# usage: delete_irida_sequence_file SAMPLE_ID FILE_ID
+#
+# NOTE: DELETE /api/samples/{id}/sequenceFiles/{fileId} is BROKEN on IRIDA 23.01.3.
+# Returns HTTP 500 NullPointerException in SequencingObjectServiceImpl.readSequencingObjectForSample
+# regardless of file type (fastq, fast5) and regardless of admin or non-admin token.
+# See GitHub issue #4 for full stack trace.
+# Files can be deleted via the IRIDA web UI.
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+delete_irida_sequence_file() {
+    echo "ERROR: DELETE /api/samples/{id}/sequenceFiles/{fileId} is broken on IRIDA 23.01.3." >&2
+    echo "       Returns HTTP 500 NullPointerException regardless of file type or token." >&2
+    echo "       Use the IRIDA web UI to delete sequence files." >&2
+    echo "       See GitHub issue #4 for details." >&2
+    return 1
+}
+
+# no tab completion - function is not operational
+complete delete_irida_sequence_file
