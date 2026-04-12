@@ -200,6 +200,7 @@ retrieved with garbled encoding. The terminal is UTF-8; the corruption originate
 The fast5 test file `test_output/f6dee372-3d33-45e8-8557-7f549f5bca71.fast5` is from the
 "Example dataset containing Fast5 and BAM files" dataset published on figshare by the Delter project.
 https://figshare.com/articles/dataset/Example_dataset_containing_Fast5_and_BAM_files/26093869
+
 Delter: https://github.com/nkuyfq/Delter
 
 sha256: 41b81c81f9a30d0acc7ff365347140926b0ac0e31d22fc5516a3821b1cf7be72
