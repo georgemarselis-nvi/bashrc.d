@@ -53,60 +53,70 @@ get_irida_token_admin
 
 ### Projects
 
-| Function                     | Description                               |
-| ---------------------------- | ----------------------------------------- |
-| `get_irida_projects`         | list all accessible projects              |
-| `get_irida_project`          | get a single project by ID                |
-| `get_irida_project_analyses` | list analyses for a project               |
-| `get_irida_project_metadata` | get metadata for all samples in a project |
-| `get_irida_project_users`    | list users in a project                   |
-| `create_irida_project`       | create a new project                      |
+| Function                     | Description                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `get_irida_projects`         | list all accessible projects                                                                          |
+| `get_irida_project`          | get a single project by ID                                                                            |
+| `get_irida_project_analyses` | list analyses for a project                                                                           |
+| `get_irida_project_hash`     | get the hash of a project's sample data                                                               |
+| `get_irida_project_metadata` | get metadata for all samples in a project                                                             |
+| `get_irida_project_users`    | list users in a project                                                                               |
+| `create_irida_project`       | create a new project. Confirmed working as non-admin (RBAC gap, see issue #12)                        |
+| `mod_irida_project`          | update project fields via PATCH. Confirmed working as non-admin for member projects (RBAC gap, see issue #12). Patchable: name, projectDescription, organism, genomeSize, minimumCoverage, maximumCoverage. |
 
 ### Samples
 
-| Function                               | Description                        |
-| -------------------------------------- | ---------------------------------- |
-| `get_irida_samples`                    | list samples in a project          |
-| `get_irida_sample_metadata`            | get metadata for a single sample   |
-| `get_irida_sample_files_metadata`      | list sequence files for a sample   |
-| `get_irida_sample_pairs_metadata`      | list paired-end files for a sample |
-| `get_irida_sample_unpaired_metadata`   | list single-end files for a sample |
-| `get_irida_sample_assemblies_metadata` | list assemblies for a sample       |
-| `get_irida_sample_fast5_metadata`      | list fast5 files for a sample      |
-| `create_irida_sample_in_project`       | create a new sample in a project   |
-| `delete_irida_sample_from_project`     | delete a sample from a project     |
+| Function                               | Description                                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `get_irida_samples`                    | list samples in a project                                                                        |
+| `get_irida_sample_metadata`            | get metadata for a single sample                                                                 |
+| `get_irida_sample_files_metadata`      | list sequence files for a sample                                                                 |
+| `get_irida_sample_pairs_metadata`      | list paired-end files for a sample                                                               |
+| `get_irida_sample_unpaired_metadata`   | list single-end files for a sample. NOTE: workaround for broken `/sequenceFiles/unpaired` endpoint (see issue #4) |
+| `get_irida_sample_assemblies_metadata` | list assemblies for a sample                                                                     |
+| `get_irida_sample_fast5_metadata`      | list fast5 files for a sample                                                                    |
+| `create_irida_sample_in_project`       | create a new sample in a project                                                                 |
+| `mod_irida_sample`                     | update sample fields via PATCH. Patchable: sampleName, description, organism, collectionDate, collectedBy, strain, isolate, latitude, longitude, geographicLocationName, isolationSource. |
+| `delete_irida_sample_from_project`     | delete a sample from a project                                                                   |
 
 ### Sequence files
 
-| Function                           | Description                               |
-| ---------------------------------- | ----------------------------------------- |
-| `get_irida_download_sequence_file` | download a single sequence file           |
-| `get_irida_download_sequence_pair` | download both R1 and R2 for a sample pair |
+| Function                           | Description                                                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `get_irida_download_sequence_file` | download a single sequence file                                                                                 |
+| `get_irida_download_sequence_pair` | download both R1 and R2 for a sample pair                                                                       |
+| `upload_irida_fastq_pair`          | upload a paired-end fastq pair to a sample via `POST /api/samples/{id}/pairs`. Confirmed working as non-admin (RBAC gap, see issue #12). Sequencing run must be in UPLOADING state. |
+| `upload_irida_fast5`               | upload a fast5 file to a sample via `POST /api/samples/{id}/fast5`. Confirmed working as non-admin (RBAC gap, see issue #12). |
+| `delete_irida_sequence_file`       | stub only. `DELETE /api/samples/{id}/sequenceFiles/{fileId}` is broken on VIGASP 23.01.3 (NullPointerException, see issue #4). |
 
 ### Sequencing runs
 
-| Function                      | Description                                                                                                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `get_irida_sequence_run`      | list all sequencing runs or get a single run by ID. Supports `--sort-id`, `--group-status`. Requires admin token to see all runs; non-admin users see only their own runs. |
-| `create_irida_sequencing_run` | create a new sequencing run. Required: SEQUENCER_TYPE, LAYOUT_TYPE. Optional: DESCRIPTION, WORKFLOW.                                                                       |
-| `change_irida_sequencing_run` | update fields on a sequencing run. Requires admin token. Patchable: uploadStatus, sequencerType, layoutType, description. workflow is not patchable.                       |
-| `delete_irida_sequencing_run` | delete a sequencing run by ID. Requires admin token.                                                                                                                       |
+| Function                                      | Description                                                                                                                                                                |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_irida_sequence_run`                      | list all sequencing runs or get a single run by ID. Supports `--sort-id`, `--group-status`. Requires admin token to see all runs; non-admin users see only their own runs. |
+| `create_irida_sequencing_run`                 | create a new sequencing run. Required: SEQUENCER_TYPE, LAYOUT_TYPE. Optional: DESCRIPTION, WORKFLOW. Confirmed working as non-admin (RBAC gap, see issue #12).             |
+| `check_irida_sequencing_run_upload_status`    | check the upload status of a single sequencing run. Wrapper around `get_irida_sequence_run` for scripting clarity. No WARNING, no countdown.                               |
+| `change_irida_sequencing_run`                 | update fields on a sequencing run via PATCH. Confirmed working as non-admin (RBAC gap, see issue #12). Patchable: uploadStatus, sequencerType, layoutType, description. workflow is not patchable. |
+| `delete_irida_sequencing_run`                 | delete a sequencing run by ID. Requires admin token.                                                                                                                       |
 
 ### Analyses
 
-| Function | Description |
-| ---------------------------------------- | ------------------------------------------ |
-| `get_irida_analysis_submissions`         | list all analysis submissions              |
-| `get_irida_analysis_submissions_by_type` | list analysis submissions by workflow type |
-| `get_irida_analysis_status`              | get status of an analysis submission       |
-| `get_irida_analysis_results`             | get outputs of a completed analysis        |
-| `get_irida_analysis_output_files`        | list output files for an analysis          |
+| Function                                 | Description                                                                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `get_irida_analysis_submissions`         | list all analysis submissions. NOTE: blocks on Galaxy — cached output with 15-second countdown. See issue #4.                        |
+| `get_irida_analysis_submissions_by_type` | list analysis submissions by workflow type                                                                                           |
+| `get_irida_analysis_submission`          | get a single analysis submission by ID                                                                                               |
+| `get_irida_analysis_status`              | get status of an analysis submission                                                                                                 |
+| `get_irida_analysis_result`              | get the analysis result object for a completed submission via `GET /api/analysisSubmissions/{id}/analysis`                           |
+| `get_irida_analysis_results`             | get outputs of a completed analysis                                                                                                  |
+| `get_irida_analysis_output_files`        | list output files for an analysis                                                                                                    |
 
 ### Users
 
-| Function          | Description                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------- |
-| `get_irida_users` | list all IRIDA users with roles and email addresses. In theory, it requires admin token. (See issue #5) |
+| Function                  | Description                                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_irida_users`         | list all IRIDA users with roles and email addresses. In theory, it requires admin token. (See issue #5)                                  |
+| `get_irida_user_projects` | list all projects a user is a member of via `GET /api/users/{username}/projects`                                                         |
 
 ### Version
 
@@ -164,13 +174,25 @@ All IRIDA users, including their roles and email addresses, are accessible via t
 
 ### IRIDA 23.01.3 server-side routing bug
 
-It looks like `GET /api/samples/{id}/sequenceFiles/unpaired` returns HTTP 500 regardless of input,
-even when called with a valid numeric sample ID. IRIDA logs a full Java stack trace. The client
-receives no useful error message. The endpoint is not used in these functions.
+`GET /api/samples/{id}/sequenceFiles/unpaired` returns HTTP 500 regardless of input, even when
+called with a valid numeric sample ID. IRIDA's servlet routing attempts to parse the path segment
+`unpaired` as a Java `Long` fileId, fails to cast, and throws a `NumberFormatException` before the
+request reaches the controller. The same bug affects `GET /api/sequencingrun/miseqrun` and
+`GET /api/samples/{id}/sequenceFiles/fast5`. See issue #4.
+
+`get_irida_sample_unpaired_metadata` works around this by fetching all files via
+`GET /api/samples/{id}/sequenceFiles` and subtracting paired file IDs fetched from
+`GET /api/samples/{id}/pairs`.
+
+### DELETE /api/samples/{id}/sequenceFiles/{fileId} is broken
+
+Returns HTTP 500 with `NullPointerException` in `SequencingObjectServiceImpl.readSequencingObjectForSample`
+(line 144). Fails regardless of file type (fast5, paired fastq) and regardless of admin or non-admin
+token. No workaround available via the REST API. See issue #4.
 
 ### IRIDA fails silently under load
 
-IRIDA seems to assume that the software is running of bare metal. In the NREC virtual environment
+IRIDA seems to assume that the software is running on bare metal. In the NREC virtual environment
 and even under medium to heavy API load, IRIDA stops responding without notifying the client: requests
 hang indefinitely. The only indication that something is wrong is in the Tomcat server logs. There
 is no timeout or error returned to the client.
@@ -180,9 +202,34 @@ is no timeout or error returned to the client.
 ### IRIDA mangles UTF-8 in sequencing run fields
 
 Description and workflow fields containing non-ASCII characters (e.g. Norwegian æøå) are stored and
-retrieved with garbled encoding. The terminal is UTF-8; the corruption originates server-side in IRIDA. Confirmed on VIGASP 23.01.3.
+retrieved with garbled encoding. The terminal is UTF-8; the corruption originates server-side in IRIDA.
+Confirmed on VIGASP 23.01.3.
 
 ![IRIDA double-encoding the input string](screenshots/Screenshot_irida_double-encodes_its_strings_and_performs_no_checking_2026-04-08_223902.png)
+
+### IRIDA REST API does not enforce role-based access control
+
+The IRIDA web UI restricts certain actions to admin or project manager roles. The REST API does not
+enforce the same restrictions. Any authenticated user with a valid Bearer token can perform the
+following operations that the web UI restricts to admins or project managers:
+
+- `POST /api/projects` — create projects
+- `POST /api/projects/{id}/users` — add any system user to any project they are a member of
+- `DELETE /api/projects/{id}/users/{username}` — remove any user from any project they are a member of
+- `POST /api/samples/{id}/pairs` — upload paired-end files to any accessible sample
+- `POST /api/samples/{id}/fast5` — upload fast5 files to any accessible sample
+- `POST /api/sequencingrun` — create sequencing runs
+- `PATCH /api/sequencingrun/{id}` — update sequencing run fields including uploadStatus
+- `PATCH /api/projects/{id}` — update project metadata for member projects
+
+The following endpoints correctly enforce access control:
+
+- `POST /api/users` — 403 as non-admin
+- `DELETE /api/users/{id}` — 403 as non-admin
+- `PATCH /api/users/{id}` — 200 for own user, 403 for other users
+- `POST /api/projects/{id}/samples` — 403 for non-member projects
+
+See issue #12 for full details and screen captures.
 
 ---
 
@@ -191,6 +238,9 @@ retrieved with garbled encoding. The terminal is UTF-8; the corruption originate
 * All functions use absolute paths to binaries (`/usr/bin/curl`, `/usr/bin/jq`, `/usr/bin/mlr`)
 * Credentials are always retrieved from Bitwarden. Nothing is hardcoded, no credentials exist on disk.
 * OAuth bearer token expires after 12 hours. The client secret itself does not expire.
+* IRIDA does not perform server-side checksum verification on uploads. The integrity of uploaded files is entirely the responsibility of the upload client.
+* IRIDA does not update `uploadStatus` server-side. The upload client is entirely responsible for setting it to `COMPLETE`. FastQC processing appears to be triggered on a timer (~15 seconds after upload), not on `uploadStatus` change.
+* The actual upload endpoints are `POST /api/samples/{id}/pairs` and `POST /api/samples/{id}/fast5`, not the paths listed in the IRIDA REST API documentation.
 * The IRIDA REST API documentation is available at https://phac-nml.github.io/irida-documentation/developer/rest/
 
 ---
@@ -203,12 +253,13 @@ https://figshare.com/articles/dataset/Example_dataset_containing_Fast5_and_BAM_f
 
 Delter: https://github.com/nkuyfq/Delter
 
-| Hash   | Value                                                                                                                            | 
+| Hash   | Value                                                                                                                            |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------|
 | sha256 | 41b81c81f9a30d0acc7ff365347140926b0ac0e31d22fc5516a3821b1cf7be72                                                                 |
 | sha512 | 083e579f4bb1f46d1684dbf93d75dec83d6cbba179b27cbf12f6bc6fb54832e3188eeeaa6dfefb38b6bb1013d7be5c383d34335f3e36d05f3d91077ccec9613e |
 
 ---
+
 ## License
 
 Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
@@ -216,5 +267,3 @@ Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
 This program is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation, either
 version 3 of the License, or (at your option) any later version.
-
-
