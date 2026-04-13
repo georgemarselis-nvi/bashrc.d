@@ -18,30 +18,62 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 get_irida_analysis_output_files() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID ANALYSIS_ID (you need the second argument, as well)" ; return 1 ; }
-    [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid analysis ID: ${2%%:*}" ; return 1 ; }
-    local state
-    state=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.analysisState' )
-    [[ -z "${state}" ]] && { echo "analysis ${2%%:*} not found" ; return 1 ; }
-    [[ "${state}" != "COMPLETED" ]] && { echo "analysis ${2%%:*} is ${state}, not COMPLETED" ; return 1 ; }
-    local response
-    response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${2%%:*}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-    [[ -z "${response}" ]] && { echo "analysis ${2%%:*} completed but has no output files" ; return 1 ; }
-    local urls
-    urls=$( echo "${response}" | /usr/bin/jq -r '.resource.links[] | select(.rel | startswith("outputFile")) | .href' )
-    [[ -z "${urls}" ]] && { echo "no output files found for analysis ${2%%:*}" ; return 1 ; }
-    while IFS= read -r url; do
-        local filename
-        filename=$( echo "${response}" | /usr/bin/jq -r --arg url "${url}" --arg pid "${2%%:*}" '.resource.links[] | select(.href == $url) | "\($pid)_\(.href | split("/") | last)-\(.rel | ltrimstr("outputFile/"))"' )
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID ANALYSIS_ID (you need the second argument, as well)" >&2 ; return 1 ; }
+    [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid analysis ID: ${2%%:*}" >&2 ; return 1 ; }
+
+    local _analysis_id="${2%%:*}"
+    local _response _http_code
+
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${_analysis_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+        404) echo "ERROR: analysis ${_analysis_id} not found"      >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error"             >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"           >&2 ; return 1 ;;
+    esac
+
+    local _state
+    _state=$( echo "${_response}" | /usr/bin/jq -r '.resource.analysisState // "null"' )
+    [[ "${_state}" == "null"      ]] && { echo "ERROR: analysis ${_analysis_id} not found" >&2 ; return 1 ; }
+    [[ "${_state}" != "COMPLETED" ]] && { echo "ERROR: analysis ${_analysis_id} is ${_state}, not COMPLETED" >&2 ; return 1 ; }
+
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${_analysis_id}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+        404) echo "ERROR: analysis ${_analysis_id} has no output"  >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error"             >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"           >&2 ; return 1 ;;
+    esac
+
+    local _urls
+    _urls=$( echo "${_response}" | /usr/bin/jq -r '.resource.links[] | select(.rel | startswith("outputFile")) | .href' )
+    [[ -z "${_urls}" ]] && { echo "ERROR: no output files found for analysis ${_analysis_id}" >&2 ; return 1 ; }
+
+    while IFS= read -r _url; do
+        local _filename _file_http_code
+        _filename=$( echo "${_response}" | /usr/bin/jq -r --arg url "${_url}" --arg pid "${_analysis_id}" '.resource.links[] | select(.href == $url) | "\($pid)_\(.href | split("/") | last)-\(.rel | ltrimstr("outputFile/"))"' )
         # NOTE: IRIDA ignores the Accept header for analysis output files and always returns text/plain.
         # The Accept: text/plain header is kept for clarity but has no effect on the response.
-        /usr/bin/curl --silent -X GET "${url}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: text/plain" -o "${filename}"
-        echo "downloaded: ${filename}"
-    done <<< "${urls}"
+        _file_http_code=$( /usr/bin/curl --silent --write-out '%{http_code}' -X GET "${_url}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: text/plain" -o "${_filename}" )
+        case "${_file_http_code}" in
+            200) echo "downloaded: ${_filename}" ;;
+            401) echo "ERROR: unauthorized downloading ${_filename}" >&2 ; return 1 ;;
+            403) echo "ERROR: forbidden downloading ${_filename}"    >&2 ; return 1 ;;
+            404) echo "ERROR: file not found: ${_url}"               >&2 ; return 1 ;;
+            500) echo "ERROR: IRIDA internal server error"           >&2 ; return 1 ;;
+            *)   echo "ERROR: unexpected HTTP ${_file_http_code} downloading ${_filename}" >&2 ; return 1 ;;
+        esac
+    done <<< "${_urls}"
 }
-
 complete -F _irida_analysis_complete get_irida_analysis_output_files
