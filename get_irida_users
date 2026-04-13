@@ -24,52 +24,69 @@ get_irida_users() {
     check_irida_token        || return 1
 
     if [[ -n "$1" ]]; then
-        local http_code
-        http_code=$( /usr/bin/curl --silent -o /dev/null -w "%{http_code}" -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${1}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-        [[ "${http_code}" == "500" || "${http_code}" == "404" ]] && { echo "user ${1} not found" ; return 1 ; }
-        local response
-        response=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${1}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-        echo "${response}" | /usr/bin/jq '[.projectResources.resources[] | {id: .identifier, name: .name, label: .label, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), genome_size: .genomeSize, min_coverage: .minimumCoverage, max_coverage: .maximumCoverage, sync_frequency: .syncFrequency, url: .links[0].href}]' | /usr/bin/mlr --ijson --opprint cat
+        local _response _http_code
+        _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${1}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+        _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+        case "${_http_code}" in
+            200) echo "${_response}" | /usr/bin/jq '[.projectResources.resources[] | {id: .identifier, name: .name, label: .label, organism: .organism, description: .projectDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), genome_size: .genomeSize, min_coverage: .minimumCoverage, max_coverage: .maximumCoverage, sync_frequency: .syncFrequency, url: .links[0].href}]' | /usr/bin/mlr --ijson --opprint cat ;;
+            401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+            403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+            404) echo "ERROR: user ${1} not found"                     >&2 ; return 1 ;;
+            500) echo "ERROR: user ${1} not found (IRIDA returns 500 for unknown users - see issue #4)" >&2 ; return 1 ;;
+            *)   echo "ERROR: unexpected HTTP ${_http_code}"          >&2 ; return 1 ;;
+        esac
         return
     fi
 
-    local users_json
-    users_json=$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}")
+    local _users_json _http_code
+    _users_json=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_users_json}" | /usr/bin/tail -1 )
+    _users_json=$(  echo "${_users_json}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error"            >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"          >&2 ; return 1 ;;
+    esac
     sleep 1
 
-    local usernames
-    usernames=$(echo "${users_json}" | /usr/bin/jq -r '.resource.resources[].username')
-    local total
-    total=$(echo "${usernames}" | wc -l)
+    local _usernames _total _spinner _spin_i _results _count
+    _usernames=$( echo "${_users_json}" | /usr/bin/jq -r '.resource.resources[].username' )
+    _total=$( echo "${_usernames}" | wc -l )
+    _spinner='|/-\'
+    _spin_i=0
+    _results=()
+    _count=0
 
-    local spinner='|/-\'
-    local spin_i=0
-    local results=()
-    local count=0
+    while IFS= read -r _username; do
+        _count=$(( _count + 1 ))
+        printf "\r  fetching projects for users... %s  (%d/%d)" "${_spinner:$(( _spin_i % 4 )):1}" "${_count}" "${_total}" >&2
+        _spin_i=$(( _spin_i + 1 ))
 
-    while IFS= read -r username; do
-        count=$(( count + 1 ))
-        printf "\r  fetching projects for users... %s  (%d/%d)" "${spinner:$(( spin_i % 4 )):1}" "${count}" "${total}" >&2
-        spin_i=$(( spin_i + 1 ))
+        local _proj_response _proj_http_code
+        _proj_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${_username}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        _proj_http_code=$( echo "${_proj_response}" | /usr/bin/tail -1 )
+        _proj_response=$(  echo "${_proj_response}" | /usr/bin/sed '$d' )
 
-        local http_code
-        http_code=$( /usr/bin/curl --silent -o /dev/null -w "%{http_code}" -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${username}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-        [[ "${http_code}" == "500" || "${http_code}" == "404" ]] && { echo "user ${username} not found" ; continue ; }
+        case "${_proj_http_code}" in
+            200) ;;
+            404|500) echo "user ${_username} not found" >&2 ; continue ;;
+            *) echo "ERROR: unexpected HTTP ${_proj_http_code} for user ${_username}" >&2 ; continue ;;
+        esac
 
-        local user_info
-        user_info=$(echo "${users_json}" | /usr/bin/jq -r --arg u "${username}" '.resource.resources[] | select(.username == $u) | [.identifier, .username, .firstName, .lastName, .email, .phoneNumber, .systemRole, (.enabled | tostring), .locale, .label, (.createdDate / 1000 | strftime("%Y-%m-%d")), (.modifiedDate / 1000 | strftime("%Y-%m-%d"))] | @tsv')
-
-        local projects
-        projects=$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${username}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '[.projectResources.resources[].name] | join(", ")')
+        local _user_info _projects
+        _user_info=$( echo "${_users_json}" | /usr/bin/jq -r --arg u "${_username}" '.resource.resources[] | select(.username == $u) | [.identifier, .username, .firstName, .lastName, .email, .phoneNumber, .systemRole, (.enabled | tostring), .locale, .label, (.createdDate / 1000 | strftime("%Y-%m-%d")), (.modifiedDate / 1000 | strftime("%Y-%m-%d"))] | @tsv' )
+        _projects=$( echo "${_proj_response}" | /usr/bin/jq -r '[.projectResources.resources[].name] | join(", ")' )
         sleep 1
 
-        results+=( "${user_info}"$'\t'"${projects}" )
-    done <<< "${usernames}"
+        _results+=( "${_user_info}"$'\t'"${_projects}" )
+    done <<< "${_usernames}"
 
     printf "\r%*s\r" 60 "" >&2
 
-    printf '%s\n' "${results[@]}" | /usr/bin/mlr --implicit-csv-header --ifs tab --opprint label id,username,firstname,lastname,email,phone,role,enabled,locale,label,created,modified,projects
-
+    printf '%s\n' "${_results[@]}" | /usr/bin/mlr --implicit-csv-header --ifs tab --opprint label id,username,firstname,lastname,email,phone,role,enabled,locale,label,created,modified,projects
 }
 
 _get_irida_users_complete() {
@@ -77,7 +94,7 @@ _get_irida_users_complete() {
     check_irida_token        2>/dev/null || return
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local usernames
-    usernames=$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[].username')
+    usernames=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[].username' )
     COMPREPLY=( $(compgen -W "${usernames}" -- "${cur}") )
 }
 
