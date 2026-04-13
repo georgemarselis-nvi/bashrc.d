@@ -1,0 +1,88 @@
+# mod_irida_user
+# update fields on an existing IRIDA user via PATCH /api/users/{id}
+# requires admin token for other users; non-admin can only patch their own user
+#
+# patchable fields: username, email, password, firstName, lastName, phoneNumber, enabled, systemRole, locale
+#
+# usage: mod_irida_user USER_ID|USERNAME [--username USERNAME] [--email EMAIL] [--password PASSWORD]
+#                                        [--firstname FIRSTNAME] [--lastname LASTNAME] [--phone PHONE]
+#                                        [--enabled true|false] [--role ROLE] [--locale LOCALE]
+#
+# example: mod_irida_user 54:kotop --email newemail@vetinst.no --phone 99887766
+# example: mod_irida_user gmarselis --phone 1-800-2600
+#
+# NOTE: confirmed working as non-admin for own user. 403 for other users. See issue #12.
+# NOTE: systemRole values: ROLE_USER | ROLE_ADMIN | ROLE_TECHNICIAN | ROLE_SEQUENCER | ROLE_MANAGER
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+mod_irida_user() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} USER_ID|USERNAME [--username USERNAME] [--email EMAIL] [--password PASSWORD] [--firstname FIRSTNAME] [--lastname LASTNAME] [--phone PHONE] [--enabled true|false] [--role ROLE] [--locale LOCALE]" >&2 ; return 1 ; }
+    local _user_id="${1%%:*}"
+    shift
+    if [[ ! "${_user_id}" =~ ^[0-9]+$ ]]; then
+        local _lookup
+        _lookup=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg u "${_user_id}" '.resource.resources[] | select(.username == $u) | .identifier // "null"' )
+        [[ -z "${_lookup}" || "${_lookup}" == "null" ]] && { echo "ERROR: user ${_user_id} not found" >&2 ; return 1 ; }
+        _user_id="${_lookup}"
+    fi
+    local _username _email _password _firstname _lastname _phone _enabled _role _locale
+    while [[ $# -gt 0 ]]; do
+        case "${1}" in
+            --username)  _username="${2}"  ; shift 2 ;;
+            --email)     _email="${2}"     ; shift 2 ;;
+            --password)  _password="${2}"  ; shift 2 ;;
+            --firstname) _firstname="${2}" ; shift 2 ;;
+            --lastname)  _lastname="${2}"  ; shift 2 ;;
+            --phone)     _phone="${2}"     ; shift 2 ;;
+            --enabled)   _enabled="${2}"   ; shift 2 ;;
+            --role)      _role="${2}"      ; shift 2 ;;
+            --locale)    _locale="${2}"    ; shift 2 ;;
+            *) echo "ERROR: unknown option: ${1}" >&2 ; return 1 ;;
+        esac
+    done
+    [[ -z "${_username}${_email}${_password}${_firstname}${_lastname}${_phone}${_enabled}${_role}${_locale}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${_user_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "$( /usr/bin/jq -cn --arg un "${_username:-}" --arg em "${_email:-}" --arg pw "${_password:-}" --arg fn "${_firstname:-}" --arg ln "${_lastname:-}" --arg ph "${_phone:-}" --arg en "${_enabled:-}" --arg ro "${_role:-}" --arg lo "${_locale:-}" '{}
+        | if $un != "" then . + {"username": $un} else . end
+        | if $em != "" then . + {"email": $em} else . end
+        | if $pw != "" then . + {"password": $pw} else . end
+        | if $fn != "" then . + {"firstName": $fn} else . end
+        | if $ln != "" then . + {"lastName": $ln} else . end
+        | if $ph != "" then . + {"phoneNumber": $ph} else . end
+        | if $en != "" then . + {"enabled": ($en | test("true"))} else . end
+        | if $ro != "" then . + {"systemRole": $ro} else . end
+        | if $lo != "" then . + {"locale": $lo} else . end' )" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) echo "user ${_user_id} updated" ;;
+        400) echo "ERROR: bad request - $( echo "${_response}" | /usr/bin/jq -r '.message // "unknown error"' )" >&2 ; return 1 ;;
+        401) echo "ERROR: unauthorized - token invalid or expired"          >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden - admin token required for other users" >&2 ; return 1 ;;
+        404) echo "ERROR: user ${_user_id} not found"                       >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error"                      >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"                    >&2 ; return 1 ;;
+    esac
+}
+
+complete -F _irida_users_complete mod_irida_user
+
+# NOTE: if USER_ID is not numeric, it is treated as a username and resolved to a numeric ID
+# via GET /api/users (full list) filtered by username. This adds one extra curl call.
+# GET /api/users/{username} is broken on IRIDA 23.01.3 - Spring tries to parse the username
+# as a Long and throws NumberFormatException. See issue #4.
+# If you know the numeric ID, pass it directly to avoid the lookup.
