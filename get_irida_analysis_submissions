@@ -55,29 +55,24 @@ get_irida_analysis_submissions() {
         echo "*** CACHED RESULT -- NOT LIVE DATA ***" >&2
     fi
 
-    # Dead code — curl call preserved for when IRIDA is fixed or replaced.
-    # local _response
-    # _response=$( /usr/bin/curl --silent -X GET \
-    #     "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions" \
-    #     -H "Authorization: Bearer ${IRIDA_TOKEN}" )
-    # [[ -z "${_response}" ]] && { echo "ERROR: no response from server" >&2 ; return 1 ; }
-    # [[ $( echo "${_response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "no analyses found" >&2 ; return 1 ; }
-    # echo "${_response}" | /usr/bin/jq '[.resource.resources[] | {
-    #     id:                  .identifier,
-    #     name:                .name,
-    #     label:               .label,
-    #     workflowId:          .workflowId,
-    #     remoteWorkflowId:    .remoteWorkflowId,
-    #     state:               .analysisState,
-    #     cleaned:             .analysisCleanedState,
-    #     priority:            .priority,
-    #     automated:           .automated,
-    #     updateSamples:       .updateSamples,
-    #     analysisDescription: .analysisDescription,
-    #     created:             ( .createdDate  / 1000 | strftime("%Y-%m-%d") ),
-    #     modified:            ( .modifiedDate / 1000 | strftime("%Y-%m-%d") ),
-    #     self: ( .links[] | select(.rel == "self") | .href )
-    # }]' | /usr/bin/mlr --ijson --opprint cat
+    # Dead code: curl call preserved for when IRIDA is fixed or replaced.
+    #
+    #  If you want to test this, uncomment and go grab some coffee
+    #
+    # local _response _http_code
+    # _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    # _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    # _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+    # case "${_http_code}" in
+    #     200) [[ $( echo "${_response}" | /usr/bin/jq '.resource.resources | length' ) -eq 0 ]] && { echo "no analyses found" >&2 ; return 1 ; }
+    #          echo "${_response}" | /usr/bin/jq '[.resource.resources[] | {id: .identifier, name: .name, label: .label, workflowId: .workflowId, remoteWorkflowId: .remoteWorkflowId, state: .analysisState, cleaned: .analysisCleanedState, priority: .priority, automated: .automated, updateSamples: .updateSamples, analysisDescription: .analysisDescription, created: (.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.modifiedDate / 1000 | strftime("%Y-%m-%d")), self: (.links[] | select(.rel == "self") | .href)}]' | /usr/bin/mlr --ijson --opprint cat ;;
+    #     401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+    #     403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+    #     404) echo "ERROR: no analyses found"                       >&2 ; return 1 ;;
+    #     500) echo "ERROR: IRIDA internal server error"             >&2 ; return 1 ;;
+    #     *)   echo "ERROR: unexpected HTTP ${_http_code}"           >&2 ; return 1 ;;
+    # esac
+    #
 }
 
 # NOTE: IRIDA makes synchronous blocking calls to Galaxy for every analysis submission in the list.
