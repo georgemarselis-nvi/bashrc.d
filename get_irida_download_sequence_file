@@ -1,12 +1,12 @@
-# download_irida_sequence_file
+# get_irida_download_sequence_file
 # download a paired-end sequence file from a sample
 # PROJECT_ID is used only for tab completion, not passed to the API
 # SAMPLE_ID, PAIR_ID, FILE_ID are used in the curl call
 # filename is taken from the JSON metadata before downloading
 #
-# NOTE: irida_download_sequence_pair downloads both R1 and R2 in one call.
+# NOTE: get_irida_download_sequence_pair downloads both R1 and R2 in one call.
 #
-# example: download_irida_sequence_file [TAB once for project id] 2:Test_Data_Uploading [TAB again for sample id] 3:sample-1-Added [TAB again for pair id] 3 [TAB again for file id] 5
+# example: get_irida_download_sequence_file [TAB once for project id] 2:Test_Data_Uploading [TAB again for sample id] 3:sample-1-Added [TAB again for pair id] 3 [TAB again for file id] 5
 #
 # Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
 # This program is free software: you can redistribute it and/or modify
@@ -21,22 +21,38 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 get_irida_download_sequence_file() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing PROJECT_ID)" ; return 1 ; }
-    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing SAMPLE_ID)" ; return 1 ; }
-    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing PAIR_ID)" ; return 1 ; }
-    [[ -z "${4}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing FILE_ID)" ; return 1 ; }
-    local sample_id="${2%%:*}"
-    local pair_id="${3%%:*}"
-    local file_id="${4%%:*}"
-    local filename
-    filename=$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs/${pair_id}/files/${file_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.fileName')
-    [[ -z "${filename}" ]] && { echo "file ${file_id} not found in pair ${pair_id} for sample ${sample_id}" ; return 1 ; }
-    /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${sample_id}/pairs/${pair_id}/files/${file_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq" > "${filename}"
-    echo "Downloaded: ${filename}"
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing PROJECT_ID)" >&2 ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
+    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing PAIR_ID)" >&2 ; return 1 ; }
+    [[ -z "${4}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID FILE_ID (missing FILE_ID)" >&2 ; return 1 ; }
+    local _sample_id="${2%%:*}"
+    local _pair_id="${3%%:*}"
+    local _file_id="${4%%:*}"
+    local _response _http_code _filename
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/pairs/${_pair_id}/files/${_file_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) _filename=$( echo "${_response}" | /usr/bin/jq -r '.resource.fileName // empty' )
+             [[ -z "${_filename}" ]] && { echo "ERROR: fileName missing in response" >&2 ; return 1 ; } ;;
+        401) echo "ERROR: unauthorized - token invalid or expired"                              >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden"                                                            >&2 ; return 1 ;;
+        404) echo "ERROR: file ${_file_id} not found in pair ${_pair_id} for sample ${_sample_id}" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error"                                          >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"                                        >&2 ; return 1 ;;
+    esac
+    _http_code=$( /usr/bin/curl --silent --write-out '%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/pairs/${_pair_id}/files/${_file_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq" -o "${_filename}" )
+    case "${_http_code}" in
+        200) echo "downloaded: ${_filename}" ;;
+        401) echo "ERROR: unauthorized - token invalid or expired" >&2 ; return 1 ;;
+        403) echo "ERROR: forbidden"                               >&2 ; return 1 ;;
+        404) echo "ERROR: file ${_file_id} not found"             >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error"            >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}"          >&2 ; return 1 ;;
+    esac
 }
 
 complete -F _irida_download_complete get_irida_download_sequence_file
