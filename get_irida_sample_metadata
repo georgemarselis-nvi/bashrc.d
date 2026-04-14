@@ -38,6 +38,22 @@ get_irida_sample_metadata() {
     esac
 }
 
+# tab completion for get_irida_sample_metadata: project list at arg 1, samples from that project at arg 2
+_irida_sample_metadata_complete() {
+    check_irida_connectivity || return 1
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        2)  local project_id="${COMP_WORDS[1]%%:*}"
+            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+# NOTE: tab completion for PAIR_ID (arg 3) and FILE_ID (arg 4) triggers IRIDA routing bug
+# (NumberFormatException on /api/samples/{id}/pairs). Manual entry required for these arguments.
+# See issue #4.
+
+
 complete -F _irida_sample_metadata_complete get_irida_sample_metadata
 # NOTE: get_irida_sample_metadata returns a single object not a resources array, so the length check
 # does not apply here. A 404 is sufficient to detect a missing sample.

@@ -1,3 +1,4 @@
+# _00_irida_completions
 # Shared completion functions for IRIDA bash functions
 # Source this file before all other irida functions in .bashrc
 #
@@ -15,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+#
 # provides project then sample ID completions for functions that need both
 _irida_samples_complete() {
     check_irida_connectivity || return 1
@@ -33,6 +35,7 @@ _irida_samples_complete() {
     esac
 }
 
+#
 # provides project ID completions for functions that only need a project
 _irida_projects_complete() {
     check_irida_connectivity || return 1
@@ -43,6 +46,7 @@ _irida_projects_complete() {
     esac
 }
 
+#
 # provides project then analysis ID completions for get_irida_analysis_results
 _irida_analysis_complete() {
     check_irida_connectivity || return 1
@@ -62,22 +66,7 @@ _irida_analysis_complete() {
     esac
 }
 
-# tab completion for get_irida_sample_metadata: project list at arg 1, samples from that project at arg 2
-_irida_sample_metadata_complete() {
-    check_irida_connectivity || return 1
-    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-    case ${COMP_CWORD} in
-        1)  COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
-        2)  local project_id="${COMP_WORDS[1]%%:*}"
-            COMPREPLY=($(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName)"')" -- "${COMP_WORDS[COMP_CWORD]}")) ;;
-        *)  COMPREPLY=() ;;
-    esac
-}
-# NOTE: tab completion for PAIR_ID (arg 3) and FILE_ID (arg 4) triggers IRIDA routing bug
-# (NumberFormatException on /api/samples/{id}/pairs). Manual entry required for these arguments.
-# See issue #4.
-
-
+#
 # provides sequencing run ID completions for get_irida_sequence_run
 _irida_sequence_run_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
@@ -87,6 +76,7 @@ _irida_sequence_run_complete() {
     esac
 }
 
+#
 # tab completion for create_irida_sequencing_run LAYOUT_TYPE (arg 2)
 _irida_layout_type_complete() {
     # sequencerType is a free-form string. Only "miseq" and "directory" are confirmed
@@ -102,6 +92,7 @@ _irida_layout_type_complete() {
     esac
 }
 
+#
 # tab completion for change_irida_sequencing_run: run id, uploadStatus, sequencerType, layoutType, description
 _irida_change_sequence_run_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
@@ -115,6 +106,7 @@ _irida_change_sequence_run_complete() {
     esac
 }
 
+#
 # tab completion for functions that take a USERNAME argument
 _irida_users_complete() {
     check_irida_connectivity || return 1
@@ -124,5 +116,4 @@ _irida_users_complete() {
         *)  COMPREPLY=() ;;
     esac
 }
-
 
