@@ -43,7 +43,7 @@ create_irida_user() {
     _password=$( /usr/bin/pwgen --capitalize --numerals --symbols --secure --ambiguous 16 1 )
     _password_encoded=$( /usr/bin/urlencode "${_password}" )
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg un "${1}" --arg fn "${2}" --arg ln "${3}" --arg em "${4}" --arg sr "${5}" --arg ph "${6:-}" --arg pw "${_password_encoded}" '{"username": $un, "firstName": $fn, "lastName": $ln, "email": $em, "systemRole": $sr, "password": $pw, "locale": "en"} | if $ph != "" then . + {"phoneNumber": $ph} else . end' )" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST '${IRIDA_BASE_URL}/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg un "${1}" --arg fn "${2}" --arg ln "${3}" --arg em "${4}" --arg sr "${5}" --arg ph "${6:-}" --arg pw "${_password_encoded}" '{"username": $un, "firstName": $fn, "lastName": $ln, "email": $em, "systemRole": $sr, "password": $pw, "locale": "en"} | if $ph != "" then . + {"phoneNumber": $ph} else . end' )" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$( echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in

@@ -29,7 +29,7 @@ change_irida_sequencing_run() {
     [[ -z "${2}" ]] && { /usr/bin/printf "Missing uploadStatus.\nusage: ${FUNCNAME[0]} RUN_ID UPLOAD_STATUS [SEQUENCER_TYPE] [LAYOUT_TYPE] [DESCRIPTION]\n" ; return 1 ; }
     [[ "${2}" != "UPLOADING" && "${2}" != "COMPLETE" && "${2}" != "ERROR" ]] && { echo "invalid uploadStatus: ${2} (UPLOADING|COMPLETE|ERROR)" ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/${1%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg us "${2}" --arg st "${3:-}" --arg lt "${4:-}" --arg desc "${5:-}" '{"uploadStatus": $us} | if $st != "" then . + {"sequencerType": $st} else . end | if $lt != "" then . + {"layoutType": $lt} else . end | if $desc != "" then . + {"description": $desc} else . end' )" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "${IRIDA_BASE_URL}/api/sequencingrun/${1%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg us "${2}" --arg st "${3:-}" --arg lt "${4:-}" --arg desc "${5:-}" '{"uploadStatus": $us} | if $st != "" then . + {"sequencerType": $st} else . end | if $lt != "" then . + {"layoutType": $lt} else . end | if $desc != "" then . + {"description": $desc} else . end' )" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$( echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
@@ -48,7 +48,7 @@ change_irida_sequencing_run() {
 _irida_change_sequence_run_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     case ${COMP_CWORD} in
-        1)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/' -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Accept: application/json' | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.label | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        1)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET '${IRIDA_BASE_URL}/api/sequencingrun/' -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Accept: application/json' | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.label | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         2)  COMPREPLY=( $(compgen -W "UPLOADING COMPLETE ERROR" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         3)  COMPREPLY=( $(compgen -W "directory miseq nextseq miniseq iseq nextseq2k" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         4)  COMPREPLY=( $(compgen -W "PAIRED_END SINGLE_END" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;

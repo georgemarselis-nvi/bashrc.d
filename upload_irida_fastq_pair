@@ -50,7 +50,7 @@ upload_irida_fastq_pair() {
             printf -- "\r\n--%s\r\nContent-Disposition: form-data; name=\"parameters1\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${_boundary}" "${_params}"
             printf -- "--%s\r\nContent-Disposition: form-data; name=\"parameters2\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${_boundary}" "${_params}"
             printf -- "--%s--\r\n" "${_boundary}"
-        } | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${_boundary}" --data-binary @-
+        } | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/samples/${_sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${_boundary}" --data-binary @-
     )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$( echo "${_response}" | /usr/bin/head -n -1 )
@@ -68,14 +68,14 @@ _irida_upload_fastq_pair_complete() {
     case ${COMP_CWORD} in
         1)  check_irida_connectivity || return 1
             COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         2)  check_irida_connectivity || return 1
             COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
             local _project_id="${COMP_WORDS[1]%%:*}"
-            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         3)  check_irida_connectivity || return 1
             COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.label | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.label | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         *)  COMPREPLY=() ;;
     esac
 }

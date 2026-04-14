@@ -60,11 +60,11 @@ delete_irida_user() {
     fi
 
     local _user_id
-    _user_id=$( /usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg un "${_username}" '.resource.resources[] | select(.username == $un) | .identifier' ) 
+    _user_id=$( /usr/bin/curl --silent -X GET '${IRIDA_BASE_URL}/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg un "${_username}" '.resource.resources[] | select(.username == $un) | .identifier' ) 
     [[ -z "${_user_id}" || "${_user_id}" == "null" ]] && { echo "ERROR: user ${_username} not found" >&2 ; return 1 ; }
 
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${_user_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X DELETE "${IRIDA_BASE_URL}/api/users/${_user_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     case "${_http_code}" in
         200) echo "user ${_username} deleted" ;;

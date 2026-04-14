@@ -40,7 +40,7 @@ get_irida_analysis_submissions_by_type() {
     done ) 2>/dev/null &
     spinner_pid=$!
     local _response _http_code
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/analysisType/${1}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/analysisSubmissions/analysisType/${1}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     kill "${spinner_pid}" 2>/dev/null
     wait "${spinner_pid}" 2>/dev/null
     printf "\r                          \r"

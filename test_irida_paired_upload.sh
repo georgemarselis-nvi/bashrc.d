@@ -34,7 +34,7 @@ R2="/home/gmarselis/.bashrc.d/test_output/2024_EQA13.Strain0020_R2_001.fastq"
   printf -- "\r\n--%s\r\nContent-Disposition: form-data; name=\"parameters1\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${BOUNDARY}" "${PARAMS}"
   printf -- "--%s\r\nContent-Disposition: form-data; name=\"parameters2\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${BOUNDARY}" "${PARAMS}"
   printf -- "--%s--\r\n" "${BOUNDARY}"
-} | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/11745/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${BOUNDARY}" --data-binary @- \
+} | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/samples/11745/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${BOUNDARY}" --data-binary @- \
   | /usr/bin/head -n -1 \
   | /usr/bin/jq '{pair_id: .resource.identifier, label: .resource.label, processingState: .resource.processingState, r1_id: .resource.forwardSequenceFile.identifier, r1_file: .resource.forwardSequenceFile.fileName, r1_size: .resource.forwardSequenceFile.fileSizeBytes, r1_sha256: .resource.forwardSequenceFile.uploadSha256, r2_id: .resource.reverseSequenceFile.identifier, r2_file: .resource.reverseSequenceFile.fileName, r2_size: .resource.reverseSequenceFile.fileSizeBytes, r2_sha256: .resource.reverseSequenceFile.uploadSha256, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d"))}' \
   | /usr/bin/mlr --ijson --opprint cat

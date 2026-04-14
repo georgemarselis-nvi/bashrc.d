@@ -37,7 +37,7 @@ check_irida_sequencing_run_upload_status() {
     local _response _http_code
 
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' \
-        -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/${_id}" \
+        -X GET "${IRIDA_BASE_URL}/api/sequencingrun/${_id}" \
         -H "Authorization: Bearer ${IRIDA_TOKEN}" \
         -H "Accept: application/json" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )

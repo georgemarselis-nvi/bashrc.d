@@ -30,7 +30,7 @@ delete_irida_user_from_project() {
     [[ -z "${1}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} PROJECT_ID USERNAME\n" ; return 1 ; }
     [[ -z "${2}" ]] && { /usr/bin/printf "Missing username.\nusage: ${FUNCNAME[0]} PROJECT_ID USERNAME\n" ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/users/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X DELETE "${IRIDA_BASE_URL}/api/projects/${1%%:*}/users/${2%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     case "${_http_code}" in
         200) echo "user ${2%%:*} removed from project ${1%%:*}" ;;
@@ -45,10 +45,10 @@ delete_irida_user_from_project() {
 _irida_delete_user_from_project_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     case ${COMP_CWORD} in
-        1)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET 'http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        1)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET '${IRIDA_BASE_URL}/api/projects' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         2)  local project_id="${COMP_WORDS[1]%%:*}"
             local IFS=$'\n'
-            mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.username):\(.firstName | gsub(" "; "_"))_\(.lastName | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ;;
+            mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/projects/${project_id}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.username):\(.firstName | gsub(" "; "_"))_\(.lastName | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ;;
         *)  COMPREPLY=() ;;
     esac
 }

@@ -27,7 +27,7 @@ get_irida_analysis_output_files() {
     local _analysis_id="${2%%:*}"
     local _response _http_code
 
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${_analysis_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/analysisSubmissions/${_analysis_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
@@ -44,7 +44,7 @@ get_irida_analysis_output_files() {
     [[ "${_state}" == "null"      ]] && { echo "ERROR: analysis ${_analysis_id} not found" >&2 ; return 1 ; }
     [[ "${_state}" != "COMPLETED" ]] && { echo "ERROR: analysis ${_analysis_id} is ${_state}, not COMPLETED" >&2 ; return 1 ; }
 
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${_analysis_id}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/analysisSubmissions/${_analysis_id}/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in

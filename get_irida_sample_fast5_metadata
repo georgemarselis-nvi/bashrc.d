@@ -28,7 +28,7 @@ get_irida_sample_fast5_metadata() {
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
     local _sample_id="${2%%:*}"
     local _response _http_code
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/fast5" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/samples/${_sample_id}/fast5" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in

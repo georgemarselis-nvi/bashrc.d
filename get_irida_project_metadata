@@ -23,7 +23,7 @@ get_irida_project_metadata() {
     check_irida_token        || return 1
     [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID" >&2 ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/samples/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/projects/${1%%:*}/samples/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$( echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in

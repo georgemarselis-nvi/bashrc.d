@@ -29,7 +29,7 @@ get_irida_analysis_submission() {
     [[ "${1%%:*}" == "no_analyses_found" ]] && { echo "ERROR: no analyses found for that project" >&2 ; return 1 ; }
     [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid analysis ID: ${1%%:*}" >&2 ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/${1%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/analysisSubmissions/${1%%:*}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$( echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in

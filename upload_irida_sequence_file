@@ -36,7 +36,7 @@ upload_irida_sequence_file() {
     local _sample_id="${2%%:*}"
     local _http_code _response
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' \
-        -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/sequenceFiles" \
+        -X POST "${IRIDA_BASE_URL}/api/samples/${_sample_id}/sequenceFiles" \
         -H "Authorization: Bearer ${IRIDA_TOKEN}" \
         -F "file=@${3}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
@@ -55,11 +55,11 @@ _irida_upload_sequence_file_complete() {
     case ${COMP_CWORD} in
         1)  check_irida_connectivity || return 1
             COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
-            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         2)  check_irida_connectivity || return 1
             COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
             local _project_id="${COMP_WORDS[1]%%:*}"
-            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+            COMPREPLY=( $(compgen -W "$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.sampleName | gsub(" "; "_"))"' )" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         *)  COMPREPLY=() ;;
     esac
 }

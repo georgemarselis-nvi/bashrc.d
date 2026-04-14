@@ -35,7 +35,7 @@ mod_irida_user() {
     shift
     if [[ ! "${_user_id}" =~ ^[0-9]+$ ]]; then
         local _lookup
-        _lookup=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg u "${_user_id}" '.resource.resources[] | select(.username == $u) | .identifier // "null"' )
+        _lookup=$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg u "${_user_id}" '.resource.resources[] | select(.username == $u) | .identifier // "null"' )
         [[ -z "${_lookup}" || "${_lookup}" == "null" ]] && { echo "ERROR: user ${_user_id} not found" >&2 ; return 1 ; }
         _user_id="${_lookup}"
     fi
@@ -56,7 +56,7 @@ mod_irida_user() {
     done
     [[ -z "${_username}${_email}${_password}${_firstname}${_lastname}${_phone}${_enabled}${_role}${_locale}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${_user_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "$( /usr/bin/jq -cn --arg un "${_username:-}" --arg em "${_email:-}" --arg pw "${_password:-}" --arg fn "${_firstname:-}" --arg ln "${_lastname:-}" --arg ph "${_phone:-}" --arg en "${_enabled:-}" --arg ro "${_role:-}" --arg lo "${_locale:-}" '{}
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "${IRIDA_BASE_URL}/api/users/${_user_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "$( /usr/bin/jq -cn --arg un "${_username:-}" --arg em "${_email:-}" --arg pw "${_password:-}" --arg fn "${_firstname:-}" --arg ln "${_lastname:-}" --arg ph "${_phone:-}" --arg en "${_enabled:-}" --arg ro "${_role:-}" --arg lo "${_locale:-}" '{}
         | if $un != "" then . + {"username": $un} else . end
         | if $em != "" then . + {"email": $em} else . end
         | if $pw != "" then . + {"password": $pw} else . end

@@ -21,7 +21,7 @@
 
 FAST5="/home/gmarselis/.bashrc.d/test_output/f6dee372-3d33-45e8-8557-7f549f5bca71.fast5"
 
-/usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/11745/fast5" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@${FAST5}" \
+/usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/samples/11745/fast5" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@${FAST5}" \
   | /usr/bin/head -n -1 \
   | /usr/bin/jq '{id: .resource.identifier, file: .resource.fileName, size: .resource.fileSizeBytes, sha256: .resource.uploadSha256, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d"))}' \
   | /usr/bin/mlr --ijson --opprint cat

@@ -43,7 +43,7 @@ mod_irida_project() {
     done
     [[ -z "${_name}${_description}${_organism}${_genome_size}${_min_coverage}${_max_coverage}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_project_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg name "${_name:-}" --arg desc "${_description:-}" --arg org "${_organism:-}" --arg gs "${_genome_size:-}" --arg minc "${_min_coverage:-}" --arg maxc "${_max_coverage:-}" '{}
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "${IRIDA_BASE_URL}/api/projects/${_project_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg name "${_name:-}" --arg desc "${_description:-}" --arg org "${_organism:-}" --arg gs "${_genome_size:-}" --arg minc "${_min_coverage:-}" --arg maxc "${_max_coverage:-}" '{}
         | if $name != "" then . + {"name": $name} else . end
         | if $desc != "" then . + {"projectDescription": $desc} else . end
         | if $org  != "" then . + {"organism": $org} else . end

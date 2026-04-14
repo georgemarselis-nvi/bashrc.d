@@ -26,7 +26,7 @@ get_irida_sample_pairs_metadata() {
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
     local _sample_id="${2%%:*}"
     local _response _http_code
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/samples/${_sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
@@ -41,7 +41,7 @@ get_irida_sample_pairs_metadata() {
     _pairs=$( echo "${_response}" | /usr/bin/jq -r '.resource.resources[].identifier' )
     for _pair_id in ${_pairs}; do
         local _pair_response _pair_http_code
-        _pair_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/pairs/${_pair_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        _pair_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/samples/${_sample_id}/pairs/${_pair_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
         _pair_http_code=$( echo "${_pair_response}" | /usr/bin/tail -1 )
         _pair_response=$(  echo "${_pair_response}" | /usr/bin/sed '$d' )
         case "${_pair_http_code}" in

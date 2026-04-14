@@ -33,7 +33,7 @@ delete_irida_sample_from_project() {
 
     local response
     local http_code
-    response=$( /usr/bin/curl --silent -w "\n%{http_code}" -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${project_id}/samples/${sample_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    response=$( /usr/bin/curl --silent -w "\n%{http_code}" -X DELETE "${IRIDA_BASE_URL}/api/projects/${project_id}/samples/${sample_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     http_code=$( echo "${response}" | tail -1 )
     response=$( echo "${response}" | head -n -1 )
     [[ "${http_code}" == "403" ]] && { echo "ERROR: HTTP 403 — not a member of project ${project_id} or insufficient permissions" >&2 ; return 1 ; }

@@ -55,7 +55,7 @@ mod_irida_sample() {
     done
     [[ -z "${_name}${_description}${_organism}${_isolate}${_strain}${_collected_by}${_collection_date}${_location}${_isolation_source}${_latitude}${_longitude}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn \
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "${IRIDA_BASE_URL}/api/samples/${_sample_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn \
         --arg name "${_name:-}" \
         --arg desc "${_description:-}" \
         --arg org  "${_organism:-}" \

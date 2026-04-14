@@ -20,7 +20,7 @@
 
 check_irida_connectivity() {
     [[ $- == *i* ]] || return 0
-    /usr/bin/curl --silent --connect-timeout 1 --max-time 1 "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api" -o /dev/null -w "%{http_code}" | grep -q "401" || { echo "ERROR: IRIDA unreachable at irida.vigasp.vetinst.no:8080" >&2 ; return 1 ; }
+    /usr/bin/curl --silent --connect-timeout 1 --max-time 1 "${IRIDA_BASE_URL}/api" -o /dev/null -w "%{http_code}" | grep -q "401" || { echo "ERROR: IRIDA unreachable at irida.vigasp.vetinst.no:8080" >&2 ; return 1 ; }
 }
 
 # WARNING: check_irida_connectivity will false-negative while get_irida_analysis_submissions_by_type

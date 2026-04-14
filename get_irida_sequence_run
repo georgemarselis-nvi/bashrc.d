@@ -36,7 +36,7 @@ get_irida_sequence_run() {
     check_irida_token        || return 1
     local _response _http_code _mlr_cmd
     [[ -n "${_sort}" ]] && _mlr_cmd="${_sort}" || _mlr_cmd="cat"
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/${_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/json" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/sequencingrun/${_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/json" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in

@@ -44,7 +44,7 @@ delete_irida_sequence_file() {
     local _object_id="${4%%:*}"
     local _http_code _response
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' \
-        -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/${_sample_id}/${3}/${_object_id}" \
+        -X DELETE "${IRIDA_BASE_URL}/api/samples/${_sample_id}/${3}/${_object_id}" \
         -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$(  echo "${_response}" | /usr/bin/sed '$d' )

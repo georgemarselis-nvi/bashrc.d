@@ -24,7 +24,7 @@ get_irida_user() {
     [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} USER_ID|USERNAME" >&2 ; return 1 ; }
     local _user_id="${1%%:*}"
     local _users_response _http_code
-    _users_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _users_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_users_response}" | /usr/bin/tail -1 )
     _users_response=$(  echo "${_users_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
@@ -46,7 +46,7 @@ get_irida_user() {
     local _username
     _username=$( echo "${_user}" | /usr/bin/jq -r '.username' )
     local _proj_response _proj_http_code
-    _proj_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${_username}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _proj_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/users/${_username}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _proj_http_code=$( echo "${_proj_response}" | /usr/bin/tail -1 )
     _proj_response=$(  echo "${_proj_response}" | /usr/bin/sed '$d' )
     case "${_proj_http_code}" in

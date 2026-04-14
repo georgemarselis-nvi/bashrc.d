@@ -25,7 +25,7 @@ get_irida_users() {
 
     if [[ -n "$1" ]]; then
         local _response _http_code
-        _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${1}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/users/${1}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
         _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
         _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
         case "${_http_code}" in
@@ -40,7 +40,7 @@ get_irida_users() {
     fi
 
     local _users_json _http_code
-    _users_json=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+    _users_json=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
     _http_code=$( echo "${_users_json}" | /usr/bin/tail -1 )
     _users_json=$(  echo "${_users_json}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
@@ -66,7 +66,7 @@ get_irida_users() {
         _spin_i=$(( _spin_i + 1 ))
 
         local _proj_response _proj_http_code
-        _proj_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/${_username}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
+        _proj_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/users/${_username}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
         _proj_http_code=$( echo "${_proj_response}" | /usr/bin/tail -1 )
         _proj_response=$(  echo "${_proj_response}" | /usr/bin/sed '$d' )
 
@@ -94,7 +94,7 @@ _get_irida_users_complete() {
     check_irida_token        2>/dev/null || return
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local usernames
-    usernames=$( /usr/bin/curl --silent -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[].username' )
+    usernames=$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[].username' )
     COMPREPLY=( $(compgen -W "${usernames}" -- "${cur}") )
 }
 
