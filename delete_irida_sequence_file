@@ -33,13 +33,13 @@
 delete_irida_sequence_file() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
-    [[ -z "${2}" ]] && { /usr/bin/printf "Missing sample ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
-    [[ -z "${3}" ]] && { /usr/bin/printf "Missing OBJECT_TYPE.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
-    [[ -z "${4}" ]] && { /usr/bin/printf "Missing OBJECT_ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ -z "${2:-}" ]] && { /usr/bin/printf "Missing sample ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ -z "${3:-}" ]] && { /usr/bin/printf "Missing OBJECT_TYPE.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
+    [[ -z "${4:-}" ]] && { /usr/bin/printf "Missing OBJECT_ID.\nusage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID OBJECT_TYPE OBJECT_ID\n" >&2 ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
     [[ ! "${4%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid object ID: ${4%%:*}" >&2 ; return 1 ; }
-    [[ "${3}" != "unpaired" && "${3}" != "pairs" && "${3}" != "fast5" ]] && { echo "ERROR: invalid object type: ${3} (unpaired|pairs|fast5)" >&2 ; return 1 ; }
+    [[ "${3:-}" != "unpaired" && "${3}" != "pairs" && "${3}" != "fast5" ]] && { echo "ERROR: invalid object type: ${3} (unpaired|pairs|fast5)" >&2 ; return 1 ; }
     local _sample_id="${2%%:*}"
     local _object_id="${4%%:*}"
     local _http_code _response

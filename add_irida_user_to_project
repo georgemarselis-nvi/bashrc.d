@@ -32,10 +32,10 @@
 add_irida_user_to_project() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { /usr/bin/printf "Missing username.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
-    [[ -z "${2}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
-    [[ -z "${3}" ]] && { /usr/bin/printf "Missing role.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
-    [[ "${3}" != "PROJECT_USER" && "${3}" != "PROJECT_OWNER" ]] && { echo "invalid role: ${3} (PROJECT_USER|PROJECT_OWNER)" ; return 1 ; }
+    [[ -z "${1:-}" ]] && { /usr/bin/printf "Missing username.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
+    [[ -z "${2:-}" ]] && { /usr/bin/printf "Missing project ID.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
+    [[ -z "${3:-}" ]] && { /usr/bin/printf "Missing role.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
+    [[ "${3:-}" != "PROJECT_USER" && "${3}" != "PROJECT_OWNER" ]] && { echo "invalid role: ${3} (PROJECT_USER|PROJECT_OWNER)" ; return 1 ; }
     local _http_code _response
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/projects/${2%%:*}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "$( /usr/bin/jq -cn --arg un "${1%%:*}" --arg role "${3}" --arg mr "${4:-LEVEL_1}" '{"userId": $un, "role": $role, "metadataRole": $mr}' )" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )

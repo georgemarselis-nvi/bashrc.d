@@ -27,15 +27,15 @@
 upload_irida_fastq_pair() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2" >&2 ; return 1 ; }
-    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing SAMPLE_ID)" >&2 ; return 1 ; }
-    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing SEQUENCING_RUN_ID)" >&2 ; return 1 ; }
-    [[ -z "${4}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing R1)" >&2 ; return 1 ; }
-    [[ -z "${5}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing R2)" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2" >&2 ; return 1 ; }
+    [[ -z "${2:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing SAMPLE_ID)" >&2 ; return 1 ; }
+    [[ -z "${3:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing SEQUENCING_RUN_ID)" >&2 ; return 1 ; }
+    [[ -z "${4:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing R1)" >&2 ; return 1 ; }
+    [[ -z "${5:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID SEQUENCING_RUN_ID R1 R2 (missing R2)" >&2 ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
     [[ ! "${3%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sequencing run ID: ${3%%:*}" >&2 ; return 1 ; }
-    [[ ! -f "${4}" ]] && { echo "ERROR: R1 file not found: ${4}" >&2 ; return 1 ; }
-    [[ ! -f "${5}" ]] && { echo "ERROR: R2 file not found: ${5}" >&2 ; return 1 ; }
+    [[ ! -f "${4:-}" ]] && { echo "ERROR: R1 file not found: ${4}" >&2 ; return 1 ; }
+    [[ ! -f "${5:-}" ]] && { echo "ERROR: R2 file not found: ${5}" >&2 ; return 1 ; }
     local _sample_id="${2%%:*}"
     local _run_id="${3%%:*}"
     local _params="{\"miseqRunId\":\"${_run_id}\",\"layoutType\":\"PAIRED_END\"}"

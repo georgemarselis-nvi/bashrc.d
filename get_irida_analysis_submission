@@ -25,7 +25,7 @@
 get_irida_analysis_submission() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} ANALYSIS_ID" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} ANALYSIS_ID" >&2 ; return 1 ; }
     [[ "${1%%:*}" == "no_analyses_found" ]] && { echo "ERROR: no analyses found for that project" >&2 ; return 1 ; }
     [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid analysis ID: ${1%%:*}" >&2 ; return 1 ; }
     local _http_code _response

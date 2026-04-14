@@ -23,9 +23,9 @@
 get_irida_download_sequence_pair() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing PROJECT_ID)" >&2 ; return 1 ; }
-    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
-    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing PAIR_ID)" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing PROJECT_ID)" >&2 ; return 1 ; }
+    [[ -z "${2:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
+    [[ -z "${3:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID PAIR_ID (missing PAIR_ID)" >&2 ; return 1 ; }
     local _sample_id="${2%%:*}"
     local _pair_id="${3%%:*}"
     local _response _http_code _file_ids

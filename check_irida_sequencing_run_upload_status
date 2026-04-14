@@ -27,7 +27,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 check_irida_sequencing_run_upload_status() {
     echo "NOTE: ${FUNCNAME[0]} is a wrapper around get_irida_sequence_run for scripting clarity" >&2
-    [[ -z "${1}" ]] && { /usr/bin/printf "Missing run ID.\nusage: ${FUNCNAME[0]} RUN_ID\n" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { /usr/bin/printf "Missing run ID.\nusage: ${FUNCNAME[0]} RUN_ID\n" >&2 ; return 1 ; }
     [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid run ID: ${1%%:*}" >&2 ; return 1 ; }
 
     check_irida_connectivity || return 1

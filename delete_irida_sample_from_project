@@ -25,8 +25,8 @@
 delete_irida_sample_from_project() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID" >&2 ; return 1 ; }
-    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID" >&2 ; return 1 ; }
+    [[ -z "${2:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
 
     local project_id="${1%%:*}"
     local sample_id="${2%%:*}"

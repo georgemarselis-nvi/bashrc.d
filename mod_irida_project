@@ -25,20 +25,20 @@
 mod_irida_project() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID [--name NAME] [--description DESC] [--organism ORG] [--genome-size SIZE] [--min-coverage MIN] [--max-coverage MAX]" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID [--name NAME] [--description DESC] [--organism ORG] [--genome-size SIZE] [--min-coverage MIN] [--max-coverage MAX]" >&2 ; return 1 ; }
     [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid project ID: ${1%%:*}" >&2 ; return 1 ; }
     local _project_id="${1%%:*}"
     shift
     local _name _description _organism _genome_size _min_coverage _max_coverage
     while [[ $# -gt 0 ]]; do
         case "${1}" in
-            --name)         _name="${2}"         ; shift 2 ;;
-            --description)  _description="${2}"  ; shift 2 ;;
-            --organism)     _organism="${2}"      ; shift 2 ;;
-            --genome-size)  _genome_size="${2}"   ; shift 2 ;;
-            --min-coverage) _min_coverage="${2}"  ; shift 2 ;;
-            --max-coverage) _max_coverage="${2}"  ; shift 2 ;;
-            *) echo "ERROR: unknown option: ${1}" >&2 ; return 1 ;;
+            --name)         _name="${2:-}"              ; shift 2 ;;
+            --description)  _description="${2:-}"       ; shift 2 ;;
+            --organism)     _organism="${2:-}"          ; shift 2 ;;
+            --genome-size)  _genome_size="${2:-}"       ; shift 2 ;;
+            --min-coverage) _min_coverage="${2:-}"      ; shift 2 ;;
+            --max-coverage) _max_coverage="${2:-}"      ; shift 2 ;;
+            *) echo "ERROR: unknown option: ${1:-}" >&2 ; return 1 ;;
         esac
     done
     [[ -z "${_name}${_description}${_organism}${_genome_size}${_min_coverage}${_max_coverage}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }

@@ -21,7 +21,7 @@
 get_irida_user() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} USER_ID|USERNAME" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} USER_ID|USERNAME" >&2 ; return 1 ; }
     local _user_id="${1%%:*}"
     local _users_response _http_code
     _users_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
