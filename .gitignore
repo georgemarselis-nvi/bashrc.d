@@ -1,2 +1,3 @@
 # ignore any downloaded files from irida
 [0-9][0-9]*
+~/.bashrc.d/rstudio_server.conf
