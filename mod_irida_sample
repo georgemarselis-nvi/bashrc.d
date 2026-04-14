@@ -31,8 +31,8 @@
 mod_irida_sample() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID [--name NAME] [--description DESC] [--organism ORG] [--isolate ISOLATE] [--strain STRAIN] [--collected-by COLLECTED_BY] [--collection-date DATE] [--location LOCATION] [--isolation-source SOURCE] [--latitude LAT] [--longitude LON]" >&2 ; return 1 ; }
-    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID [--name NAME] [--description DESC] [--organism ORG] [--isolate ISOLATE] [--strain STRAIN] [--collected-by COLLECTED_BY] [--collection-date DATE] [--location LOCATION] [--isolation-source SOURCE] [--latitude LAT] [--longitude LON]" >&2 ; return 1 ; }
+    [[ -z "${2:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_ID (missing SAMPLE_ID)" >&2 ; return 1 ; }
     [[ ! "${2%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid sample ID: ${2%%:*}" >&2 ; return 1 ; }
     local _sample_id="${2%%:*}"
     shift 2
