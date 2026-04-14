@@ -1,0 +1,28 @@
+# medl
+# diff current file against HEAD in meld, cleans up /tmp afterwards
+#
+# example:  medl irida_function_tests.sh
+#           medl src/foo.py
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+medl() { [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} <file>" >&2 ; return 1 ; } ; git show "HEAD:${1}" > "/tmp/${1##*/}.old" && /usr/bin/meld "/tmp/${1##*/}.old" "${1}" ; /usr/bin/rm -f "/tmp/${1##*/}.old" ; }
+
+_medl_complete() {
+    local cur ; cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $( compgen -W "$( /usr/bin/git ls-files 2>/dev/null )" -- "${cur}" ) )
+}
+
+complete -F _medl_complete medl
