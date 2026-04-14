@@ -1,6 +1,6 @@
 # rstudio_server
 # wrapper functions and bash completion for /usr/sbin/rstudio-server
-# requires: jq, mlr, ldapwhois (for display name resolution)
+# requires: /usr/bin/jq, /usr/bin/mlr, /usr/bin/ldapsearch (openldap-clients)
 # must run as root or a user with sudo access to /usr/sbin/rstudio-server
 #
 # example:  rstudio_active_sessions
@@ -29,46 +29,20 @@
 
 
 # list active RStudio sessions with display names resolved via LDAP
-# output: username, display name, sessionId, type, startTime
+# output: username, display_name, sessionId, type, startTime
 # example: rstudio_active_sessions
 
 rstudio_active_sessions() {
-    local sessions
-    sessions="$( /usr/sbin/rstudio-server active-sessions 2>/dev/null )"
+    local sessions ; sessions="$( /usr/sbin/rstudio-server active-sessions 2>/dev/null )"
     [[ -z "${sessions}" ]] && { echo "${FUNCNAME[0]}: no output from rstudio-server" >&2 ; return 1 ; }
 
-    local usernames
-    usernames="$( echo "${sessions}" | /usr/bin/jq -r '.sessions[].username' )"
-
-    # build a lookup table: username -> displayName
     local -A display_names
     while IFS= read -r uname ; do
-        local dn
-        dn="$( ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI \
-            -b dc=vetinst,dc=no \
-            "(&(objectClass=user)(userPrincipalName=${uname}))" \
-            displayName 2>/dev/null \
-            | grep '^displayName:' | awk '{$1=""; print $0}' | sed 's/^ //' )"
+        local dn ; dn="$( /usr/bin/ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no "(&(objectClass=user)(userPrincipalName=${uname}))" displayName 2>/dev/null | /usr/bin/grep '^displayName:' | /usr/bin/awk '{$1=""; print $0}' | /usr/bin/sed 's/^ //' )"
         display_names["${uname}"]="${dn:-N/A}"
-    done <<< "${usernames}"
+    done <<< "$( echo "${sessions}" | /usr/bin/jq -r '.sessions[].username' )"
 
-    # build tsv: username, displayName, sessionId, type, startTime
-    local tsv
-    tsv="$( echo "${sessions}" | /usr/bin/jq -r \
-        '.sessions[] | [.username, .sessionId, .type, .startTime] | @tsv' )"
-
-    # inject display name as second column and pipe to mlr for pretty print
-    {
-        printf '%s\t%s\t%s\t%s\t%s\n' "username" "display_name" "sessionId" "type" "startTime"
-        while IFS=$'\t' read -r uname sid stype stime ; do
-            printf '%s\t%s\t%s\t%s\t%s\n' \
-                "${uname}" \
-                "${display_names[${uname}]:-N/A}" \
-                "${sid}" \
-                "${stype}" \
-                "${stime}"
-        done <<< "${tsv}"
-    } | /usr/bin/mlr --tsv --opprint cat
+    { /usr/bin/printf '%s\t%s\t%s\t%s\t%s\n' "username" "display_name" "sessionId" "type" "startTime" ; while IFS=$'\t' read -r uname sid stype stime ; do /usr/bin/printf '%s\t%s\t%s\t%s\t%s\n' "${uname}" "${display_names[${uname}]:-N/A}" "${sid}" "${stype}" "${stime}" ; done <<< "$( echo "${sessions}" | /usr/bin/jq -r '.sessions[] | [.username, .sessionId, .type, .startTime] | @tsv' )" ; } | /usr/bin/mlr --tsv --opprint cat
 }
 
 
@@ -78,23 +52,7 @@ _rstudio_server_complete() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    # all known subcommands
-    local subcommands="status start stop restart reload offline online \
-        version vs-code-version positron-version test-config verify-installation \
-        run-diagnostics upload-minidump \
-        active-sessions suspend-session suspend-all force-suspend-session \
-        force-suspend kill-session kill-all \
-        configure-vs-code install-vs-code-ext install-positron-ext \
-        list-users add-user set-admin lock-user unlock-user user-service \
-        list-nodes node-status delete-node reset-cluster \
-        generate-api-token list-api-tokens revoke-api-token"
-
-    # subcommands that take a sessionId argument
-    # NOTE: suspend-session, force-suspend-session, force-suspend are likely non-functional
-    local session_cmds="suspend-session force-suspend-session force-suspend kill-session"
-
-    # subcommands that take a username argument
-    local user_cmds="add-user set-admin lock-user unlock-user user-service revoke-api-token"
+    local subcommands="status start stop restart reload offline online version vs-code-version positron-version test-config verify-installation run-diagnostics upload-minidump active-sessions suspend-session suspend-all force-suspend-session force-suspend kill-session kill-all configure-vs-code install-vs-code-ext install-positron-ext list-users add-user set-admin lock-user unlock-user user-service list-nodes node-status delete-node reset-cluster generate-api-token list-api-tokens revoke-api-token"
 
     if [[ "${COMP_CWORD}" -eq 1 ]] ; then
         COMPREPLY=( $( compgen -W "${subcommands}" -- "${cur}" ) )
@@ -103,18 +61,11 @@ _rstudio_server_complete() {
 
     case "${prev}" in
         suspend-session|force-suspend-session|force-suspend|kill-session)
-            # complete on active sessionIds
-            local session_ids
-            session_ids="$( /usr/sbin/rstudio-server active-sessions 2>/dev/null \
-                | /usr/bin/jq -r '.sessions[].sessionId' 2>/dev/null )"
-            COMPREPLY=( $( compgen -W "${session_ids}" -- "${cur}" ) )
+            # NOTE: suspend-session, force-suspend-session, force-suspend likely non-functional
+            COMPREPLY=( $( compgen -W "$( /usr/sbin/rstudio-server active-sessions 2>/dev/null | /usr/bin/jq -r '.sessions[].sessionId' 2>/dev/null )" -- "${cur}" ) )
             ;;
         add-user|set-admin|lock-user|unlock-user|user-service|revoke-api-token)
-            # complete on registered usernames
-            local users
-            users="$( /usr/sbin/rstudio-server list-users 2>/dev/null \
-                | awk 'NR>1 {print $1}' )"
-            COMPREPLY=( $( compgen -W "${users}" -- "${cur}" ) )
+            COMPREPLY=( $( compgen -W "$( /usr/sbin/rstudio-server list-users 2>/dev/null | /usr/bin/awk 'NR>1 {print $1}' )" -- "${cur}" ) )
             ;;
         *)
             COMPREPLY=()
