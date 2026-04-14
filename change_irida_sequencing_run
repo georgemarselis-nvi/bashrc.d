@@ -24,7 +24,7 @@
 change_irida_sequencing_run() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { /usr/bin/printf "Missing run ID.\nusage: ${FUNCNAME[0]} RUN_ID UPLOAD_STATUS [SEQUENCER_TYPE] [LAYOUT_TYPE] [DESCRIPTION]\n" ; return 1 ; }
+    [[ -z "${1:-}" ]] && { /usr/bin/printf "Missing run ID.\nusage: ${FUNCNAME[0]} RUN_ID UPLOAD_STATUS [SEQUENCER_TYPE] [LAYOUT_TYPE] [DESCRIPTION]\n" ; return 1 ; }
     [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "invalid run ID: ${1%%:*}" ; return 1 ; }
     [[ -z "${2}" ]] && { /usr/bin/printf "Missing uploadStatus.\nusage: ${FUNCNAME[0]} RUN_ID UPLOAD_STATUS [SEQUENCER_TYPE] [LAYOUT_TYPE] [DESCRIPTION]\n" ; return 1 ; }
     [[ "${2}" != "UPLOADING" && "${2}" != "COMPLETE" && "${2}" != "ERROR" ]] && { echo "invalid uploadStatus: ${2} (UPLOADING|COMPLETE|ERROR)" ; return 1 ; }
