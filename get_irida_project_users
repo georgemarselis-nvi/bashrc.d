@@ -20,7 +20,7 @@
 get_irida_project_users() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID" >&2 ; return 1 ; }
     local _project_id="${1%%:*}"
     local _response _http_code
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/projects/${_project_id}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
