@@ -29,7 +29,7 @@ mod_irida_project() {
     [[ ! "${1%%:*}" =~ ^[0-9]+$ ]] && { echo "ERROR: invalid project ID: ${1%%:*}" >&2 ; return 1 ; }
     local _project_id="${1%%:*}"
     shift
-    local _name _description _organism _genome_size _min_coverage _max_coverage
+    local _name="" _description="" _organism="" _genome_size="" _min_coverage="" _max_coverage=""
     while [[ $# -gt 0 ]]; do
         case "${1}" in
             --name)         _name="${2:-}"              ; shift 2 ;;
@@ -41,7 +41,7 @@ mod_irida_project() {
             *) echo "ERROR: unknown option: ${1:-}" >&2 ; return 1 ;;
         esac
     done
-    [[ -z "${_name}${_description}${_organism}${_genome_size}${_min_coverage}${_max_coverage}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }
+    [[ -z "${_name:-}${_description}${_organism}${_genome_size}${_min_coverage}${_max_coverage}" ]] && { echo "ERROR: at least one field must be provided" >&2 ; return 1 ; }
     local _http_code _response
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X PATCH "${IRIDA_BASE_URL}/api/projects/${_project_id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg name "${_name:-}" --arg desc "${_description:-}" --arg org "${_organism:-}" --arg gs "${_genome_size:-}" --arg minc "${_min_coverage:-}" --arg maxc "${_max_coverage:-}" '{}
         | if $name != "" then . + {"name": $name} else . end
