@@ -43,6 +43,24 @@ create_irida_sequencing_run() {
         *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
     esac
 }
+
+#
+# tab completion for create_irida_sequencing_run LAYOUT_TYPE (arg 2)
+_irida_layout_type_complete() {
+    # sequencerType is a free-form string. Only "miseq" and "directory" are confirmed
+    # in IRIDA 23.01.3 documentation. The remaining values are offered as hints based
+    # on irida-uploader parser names but are unverified against the API.
+    COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
+    case ${COMP_CWORD} in
+        1)  COMPREPLY=( $(compgen -W "miseq nextseq miniseq iseq nextseq2k directory" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        2)  COMPREPLY=( $(compgen -W "PAIRED_END SINGLE_END" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        3)  COMPREPLY=( $(compgen -W '\"description\"' -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        4)  COMPREPLY=( $(compgen -W '"workflow"' -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+        *)  COMPREPLY=() ;;
+    esac
+}
+
+
 complete -F _irida_layout_type_complete create_irida_sequencing_run
 
 # NOTE: sequencerType is a free-form string. IRIDA enforces no enum server-side.
