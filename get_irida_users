@@ -23,7 +23,7 @@ get_irida_users() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
 
-    if [[ -n "$1" ]]; then
+    if [[ -n "${1:-}" ]]; then
         local _response _http_code
         _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/users/${1}/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" )
         _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
