@@ -37,7 +37,7 @@ add_irida_user_to_project() {
     [[ -z "${3}" ]] && { /usr/bin/printf "Missing role.\nusage: ${FUNCNAME[0]} USERNAME PROJECT_ID ROLE [METADATA_ROLE]\n" ; return 1 ; }
     [[ "${3}" != "PROJECT_USER" && "${3}" != "PROJECT_OWNER" ]] && { echo "invalid role: ${3} (PROJECT_USER|PROJECT_OWNER)" ; return 1 ; }
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/projects/${2%%:*}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg un "${1%%:*}" --arg role "${3}" --arg mr "${4:-LEVEL_1}" '{"userId": $un, "role": $role, "metadataRole": $mr}' )" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/projects/${2%%:*}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d "$( /usr/bin/jq -cn --arg un "${1%%:*}" --arg role "${3}" --arg mr "${4:-LEVEL_1}" '{"userId": $un, "role": $role, "metadataRole": $mr}' )" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$( echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
@@ -55,8 +55,8 @@ _irida_add_user_to_project_complete() {
     COMP_WORDBREAKS="${COMP_WORDBREAKS//:}"
     case ${COMP_CWORD} in
         1)  local IFS=$'\n'
-            mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET '${IRIDA_BASE_URL}/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.username):\(.firstName | gsub(" "; "_"))_\(.lastName | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ;;
-        2)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET '${IRIDA_BASE_URL}/api/projects' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
+            mapfile -t COMPREPLY < <(compgen -W "$(/usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.username):\(.firstName | gsub(" "; "_"))_\(.lastName | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ;;
+        2)  COMPREPLY=( $(compgen -W "$(/usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r '.resource.resources[] | "\(.identifier):\(.name | gsub(" "; "_"))"')" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         3)  COMPREPLY=( $(compgen -W "PROJECT_USER PROJECT_OWNER" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         4)  COMPREPLY=( $(compgen -W "LEVEL_1 LEVEL_2 LEVEL_3 LEVEL_4" -- "${COMP_WORDS[COMP_CWORD]}") ) ;;
         *)  COMPREPLY=() ;;

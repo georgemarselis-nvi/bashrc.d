@@ -60,7 +60,7 @@ delete_irida_user() {
     fi
 
     local _user_id
-    _user_id=$( /usr/bin/curl --silent -X GET '${IRIDA_BASE_URL}/api/users' -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg un "${_username}" '.resource.resources[] | select(.username == $un) | .identifier' ) 
+    _user_id=$( /usr/bin/curl --silent -X GET "${IRIDA_BASE_URL}/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" | /usr/bin/jq -r --arg un "${_username}" '.resource.resources[] | select(.username == $un) | .identifier' ) 
     [[ -z "${_user_id}" || "${_user_id}" == "null" ]] && { echo "ERROR: user ${_username} not found" >&2 ; return 1 ; }
 
     local _http_code _response

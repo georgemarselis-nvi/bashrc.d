@@ -53,7 +53,7 @@ get_irida_token_admin() {
     local CLIENT_ID=$(     echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^client_id:' | /usr/bin/sed 's/^client_id://'  | /usr/bin/tr -d '\r' )
     local CLIENT_SECRET=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.notes' | grep '^token:'     | /usr/bin/sed 's/^token://'      | /usr/bin/tr -d '\r' )
     local _token_response _http_code
-    _token_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST '${IRIDA_BASE_URL}/api/oauth/token' -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" )
+    _token_response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token" -d "client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=password&username=${USERNAME}&password=${PASSWORD}" )
     _http_code=$( echo "${_token_response}" | /usr/bin/tail -1 )
     _token_response=$( echo "${_token_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
