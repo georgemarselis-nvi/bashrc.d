@@ -1,3 +1,4 @@
+[root@workbench.posit.vetinst.no ~]# cat /etc/profile.d/rstudio_server
 # rstudio_server
 # wrapper functions and bash completion for /usr/sbin/rstudio-server
 # requires: /usr/bin/jq, /usr/bin/mlr, /usr/bin/ldapsearch (openldap-clients)
@@ -29,20 +30,23 @@
 
 
 # list active RStudio sessions with display names resolved via LDAP
-# output: username, display_name, sessionId, type, startTime
+# output: username, display_name, sessionId, type, startTime, days, hours, minutes
 # example: rstudio_active_sessions
 
 rstudio_active_sessions() {
-    local sessions ; sessions="$( /usr/sbin/rstudio-server active-sessions 2>/dev/null )"
+    if ! /usr/bin/klist -s ; then
+        echo "No valid Kerberos ticket found. Please enter your password."
+        read -s -p "Enter password: " password ; echo
+        echo "${password}" | /usr/bin/kinit
+        if [[ $? -ne 0 ]] ; then echo "${FUNCNAME[0]}: Kerberos authentication failed." >&2 ; return 1 ; fi
+    fi
+
+    local sessions ; sessions="$( /usr/sbin/rstudio-server active-sessions 2>/dev/null | /usr/bin/grep -v '^Active sessions result:' | /usr/bin/jq -r '.' 2>/dev/null )"
     [[ -z "${sessions}" ]] && { echo "${FUNCNAME[0]}: no output from rstudio-server" >&2 ; return 1 ; }
 
-    local -A display_names
-    while IFS= read -r uname ; do
-        local dn ; dn="$( /usr/bin/ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no "(&(objectClass=user)(userPrincipalName=${uname}))" displayName 2>/dev/null | /usr/bin/grep '^displayName:' | /usr/bin/awk '{$1=""; print $0}' | /usr/bin/sed 's/^ //' )"
-        display_names["${uname}"]="${dn:-N/A}"
-    done <<< "$( echo "${sessions}" | /usr/bin/jq -r '.sessions[].username' )"
+    local ldap_json ; ldap_json="$( /usr/bin/jq -r '.sessions[].username' <<< "${sessions}" | while IFS= read -r uname ; do dn="$( /usr/bin/ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no "(&(objectClass=user)(userPrincipalName=${uname}))" displayName 2>/dev/null | /usr/bin/grep '^displayName:' | /usr/bin/awk '{$1=""; print $0}' | /usr/bin/sed 's/^ //' )" ; /usr/bin/jq -n --arg u "${uname}" --arg d "${dn:-N/A}" '{"username":$u,"display_name":$d}' ; done | /usr/bin/jq -s '.' )"
 
-    { /usr/bin/printf '%s\t%s\t%s\t%s\t%s\n' "username" "display_name" "sessionId" "type" "startTime" ; while IFS=$'\t' read -r uname sid stype stime ; do /usr/bin/printf '%s\t%s\t%s\t%s\t%s\n' "${uname}" "${display_names[${uname}]:-N/A}" "${sid}" "${stype}" "${stime}" ; done <<< "$( echo "${sessions}" | /usr/bin/jq -r '.sessions[] | [.username, .sessionId, .type, .startTime] | @tsv' )" ; } | /usr/bin/mlr --tsv --opprint cat
+    /usr/bin/jq -c --argjson ldap "${ldap_json}" '[.sessions[] | . as $s | ($ldap[] | select(.username == $s.username) | .display_name) as $dn | (now - ($s.startTime | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime)) as $sec | {"username":$s.username,"display_name":$dn,"sessionId":$s.sessionId,"type":$s.type,"startTime":($s.startTime | strptime("%Y-%m-%dT%H:%M:%SZ") | strftime("%Y-%m-%d")),"days":($sec/86400|floor),"hours":(($sec%86400/3600)|floor),"minutes":(($sec%3600/60)|floor)}][]' <<< "${sessions}" | /usr/bin/mlr --ijson --opprint cat
 }
 
 
@@ -62,7 +66,7 @@ _rstudio_server_complete() {
     case "${prev}" in
         suspend-session|force-suspend-session|force-suspend|kill-session)
             # NOTE: suspend-session, force-suspend-session, force-suspend likely non-functional
-            COMPREPLY=( $( compgen -W "$( /usr/sbin/rstudio-server active-sessions 2>/dev/null | /usr/bin/jq -r '.sessions[].sessionId' 2>/dev/null )" -- "${cur}" ) )
+            COMPREPLY=( $( compgen -W "$( /usr/sbin/rstudio-server active-sessions 2>/dev/null | /usr/bin/grep -v '^Active sessions result:' | /usr/bin/jq -r '.sessions[].sessionId' 2>/dev/null )" -- "${cur}" ) )
             ;;
         add-user|set-admin|lock-user|unlock-user|user-service|revoke-api-token)
             COMPREPLY=( $( compgen -W "$( /usr/sbin/rstudio-server list-users 2>/dev/null | /usr/bin/awk 'NR>1 {print $1}' )" -- "${cur}" ) )
