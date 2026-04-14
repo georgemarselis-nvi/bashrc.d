@@ -1,7 +1,15 @@
 # rstudio_server
 # wrapper functions and bash completion for /usr/sbin/rstudio-server
 # requires: /usr/bin/jq, /usr/bin/mlr, /usr/bin/ldapsearch (openldap-clients)
-# must run as root or a user with sudo access to /usr/sbin/rstudio-server
+# reads site-local config from ~/.bashrc.d/rstudio_server.conf
+# must run as root or a user with sudo access to rstudio-server
+#
+# site-local config: ~/.bashrc.d/rstudio_server.conf
+# required variables:
+#   RSTUDIO_SERVER_BIN  — full path to rstudio-server binary e.g. /usr/sbin/rstudio-server
+#   LDAP_HOST           — LDAP URI e.g. ldap://dc02.example.com:3268
+#   LDAP_BASE           — LDAP search base e.g. dc=example,dc=com
+#   LDAP_DOMAIN         — domain suffix for userPrincipalName e.g. example.com
 #
 # example:  rstudio_active_sessions
 #           rstudio-server kill-session <TAB>
@@ -27,6 +35,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+# site-local config: ~/.bashrc.d/rstudio_server.conf
+# required variables:
+#   RSTUDIO_SERVER_BIN  — full path to rstudio-server binary e.g. /usr/sbin/rstudio-server
+#   LDAP_HOST           — LDAP URI e.g. ldap://dc02.example.com:3268
+#   LDAP_BASE           — LDAP search base e.g. dc=example,dc=com
+#   LDAP_DOMAIN         — domain suffix for userPrincipalName e.g. example.com
+[[ -f "${HOME}/.bashrc.d/rstudio_server.conf" ]] && source "${HOME}/.bashrc.d/rstudio_server.conf" || { echo "rstudio_server: missing ~/.bashrc.d/rstudio_server.conf" >&2 ; return 1 ; }
+
 
 # list active RStudio sessions with display names resolved via LDAP
 # output: username, display_name, sessionId, type, startTime, days, hours, minutes
@@ -40,29 +56,29 @@ rstudio_active_sessions() {
         if [[ $? -ne 0 ]] ; then echo "${FUNCNAME[0]}: Kerberos authentication failed." >&2 ; return 1 ; fi
     fi
 
-    local sessions ; sessions="$( /usr/sbin/rstudio-server active-sessions 2>/dev/null | /usr/bin/grep -v '^Active sessions result:' | /usr/bin/jq -r '.' 2>/dev/null )"
+    local sessions ; sessions="$( "${RSTUDIO_SERVER_BIN}" active-sessions 2>/dev/null | /usr/bin/grep -v '^Active sessions result:' | /usr/bin/jq -r '.' 2>/dev/null )"
     [[ -z "${sessions}" ]] && { echo "${FUNCNAME[0]}: no output from rstudio-server" >&2 ; return 1 ; }
 
-    local ldap_json ; ldap_json="$( /usr/bin/jq -r '.sessions[].username' <<< "${sessions}" | while IFS= read -r uname ; do dn="$( /usr/bin/ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no "(&(objectClass=user)(userPrincipalName=${uname}))" displayName 2>/dev/null | /usr/bin/grep '^displayName:' | /usr/bin/awk '{$1=""; print $0}' | /usr/bin/sed 's/^ //' )" ; /usr/bin/jq -n --arg u "${uname}" --arg d "${dn:-N/A}" '{"username":$u,"display_name":$d}' ; done | /usr/bin/jq -s '.' )"
+    local ldap_json ; ldap_json="$( /usr/bin/jq -r '.sessions[].username' <<< "${sessions}" | while IFS= read -r uname ; do dn="$( /usr/bin/ldapsearch -LLL -Q -H "${LDAP_HOST}" -Y GSSAPI -b "${LDAP_BASE}" "(&(objectClass=user)(userPrincipalName=${uname}))" displayName 2>/dev/null | /usr/bin/grep '^displayName:' | /usr/bin/awk '{$1=""; print $0}' | /usr/bin/sed 's/^ //' )" ; /usr/bin/jq -n --arg u "${uname}" --arg d "${dn:-N/A}" '{"username":$u,"display_name":$d}' ; done | /usr/bin/jq -s '.' )"
 
     /usr/bin/jq -c --argjson ldap "${ldap_json}" '[.sessions[] | . as $s | ($ldap[] | select(.username == $s.username) | .display_name) as $dn | (([0, (now - ($s.startTime | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime))] | max)) as $sec | {"username":$s.username,"display_name":$dn,"sessionId":$s.sessionId,"type":$s.type,"startTime":($s.startTime | strptime("%Y-%m-%dT%H:%M:%SZ") | strftime("%Y-%m-%d")),"days":($sec/86400|floor),"hours":(($sec%86400/3600)|floor),"minutes":(($sec%3600/60)|floor)}][]' <<< "${sessions}" | /usr/bin/mlr --ijson --opprint cat
 }
 
 
-# wrapper for /usr/sbin/rstudio-server
+# wrapper for rstudio-server
 # intercepts kill-session, suspend-session, force-suspend-session, force-suspend
 # and strips username_displayName:sessionId tokens down to bare sessionId
 # all other subcommands pass through unchanged
-# example: rstudio-server kill-session vi1570@vetinst.no_Kausrud,_Kyrre:17cfecfc78a31a8d2ac2c
+# example: rstudio-server kill-session vi1570_Kausrud,_Kyrre:17cfecfc78a31a8d2ac2c
 
 rstudio-server() {
     case "${1}" in
         kill-session|suspend-session|force-suspend-session|force-suspend)
             local sid ; sid="${2##*:}"
-            /usr/sbin/rstudio-server "${1}" "${sid}"
+            "${RSTUDIO_SERVER_BIN}" "${1}" "${sid}"
             ;;
         *)
-            /usr/sbin/rstudio-server "$@"
+            "${RSTUDIO_SERVER_BIN}" "$@"
             ;;
     esac
 }
@@ -86,12 +102,12 @@ _rstudio_server_complete() {
     case "${prev}" in
         kill-session|suspend-session|force-suspend-session|force-suspend)
             # NOTE: suspend-session, force-suspend-session, force-suspend likely non-functional
-            local _sessions ; _sessions="$( /usr/sbin/rstudio-server active-sessions 2>/dev/null | /usr/bin/grep -v '^Active sessions result:' | /usr/bin/jq -r '.' 2>/dev/null )"
-            local tokens ; tokens="$( /usr/bin/jq -r '.sessions[].username' <<< "${_sessions}" | while IFS= read -r uname ; do dn="$( /usr/bin/ldapsearch -LLL -Q -H ldap://dc02.vetinst.no:3268 -Y GSSAPI -b dc=vetinst,dc=no '(&(objectClass=user)(userPrincipalName='"${uname}"'))' displayName 2>/dev/null | /usr/bin/grep '^displayName:' | /usr/bin/awk '{$1=""; print $0}' | /usr/bin/sed 's/^ //' )" ; sid="$( /usr/bin/jq -r --arg u "${uname}" '.sessions[] | select(.username==$u) | .sessionId' <<< "${_sessions}" )" ; echo "${uname}_${dn// /_}:${sid}" ; done )"
+            local _sessions ; _sessions="$( "${RSTUDIO_SERVER_BIN}" active-sessions 2>/dev/null | /usr/bin/grep -v '^Active sessions result:' | /usr/bin/jq -r '.' 2>/dev/null )"
+            local tokens ; tokens="$( /usr/bin/jq -r '.sessions[].username' <<< "${_sessions}" | while IFS= read -r uname ; do dn="$( /usr/bin/ldapsearch -LLL -Q -H "${LDAP_HOST}" -Y GSSAPI -b "${LDAP_BASE}" '(&(objectClass=user)(userPrincipalName='"${uname}"'))' displayName 2>/dev/null | /usr/bin/grep '^displayName:' | /usr/bin/awk '{$1=""; print $0}' | /usr/bin/sed 's/^ //' )" ; sid="$( /usr/bin/jq -r --arg u "${uname}" '.sessions[] | select(.username==$u) | .sessionId' <<< "${_sessions}" )" ; echo "${uname}_${dn// /_}:${sid}" ; done )"
             COMPREPLY=( $( compgen -W "${tokens}" -- "${cur}" ) )
             ;;
         add-user|set-admin|lock-user|unlock-user|user-service|revoke-api-token)
-            COMPREPLY=( $( compgen -W "$( /usr/sbin/rstudio-server list-users 2>/dev/null | /usr/bin/awk 'NR>1 {print $1}' )" -- "${cur}" ) )
+            COMPREPLY=( $( compgen -W "$( "${RSTUDIO_SERVER_BIN}" list-users 2>/dev/null | /usr/bin/awk 'NR>1 {print $1}' )" -- "${cur}" ) )
             ;;
         *)
             COMPREPLY=()
@@ -100,5 +116,4 @@ _rstudio_server_complete() {
 }
 
 complete -F _rstudio_server_complete rstudio-server
-complete -F _rstudio_server_complete /usr/sbin/rstudio-server
-
+complete -F _rstudio_server_complete "${RSTUDIO_SERVER_BIN}"
