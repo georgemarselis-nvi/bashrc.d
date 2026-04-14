@@ -25,23 +25,23 @@
 create_irida_sample_in_project() {
     check_irida_connectivity || return 1
     check_irida_token        || return 1
-    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism [isolate] [strain] [collectedBy] [collectionDate] [geographicLocationName] [isolationSource] [latitude] [longitude]" >&2 ; return 1 ; }
-    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing sampleName)" >&2 ; return 1 ; }
-    [[ -z "${3}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing description)" >&2 ; return 1 ; }
-    [[ -z "${4}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing organism)" >&2 ; return 1 ; }
+    [[ -z "${1:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism [isolate] [strain] [collectedBy] [collectionDate] [geographicLocationName] [isolationSource] [latitude] [longitude]" >&2 ; return 1 ; }
+    [[ -z "${2:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing sampleName)" >&2 ; return 1 ; }
+    [[ -z "${3:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing description)" >&2 ; return 1 ; }
+    [[ -z "${4:-}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID sampleName description organism (missing organism)" >&2 ; return 1 ; }
 
     local _project_id="${1%%:*}"
-    local _sampleName="${2}"
-    local _description="${3}"
-    local _organism="${4}"
-    local _isolate="${5}"
-    local _strain="${6}"
-    local _collectedBy="${7}"
-    local _collectionDate="${8}"
-    local _geographicLocationName="${9}"
-    local _isolationSource="${10}"
-    local _latitude="${11}"
-    local _longitude="${12}"
+    local _sampleName="${2:-}"
+    local _description="${3:-}"
+    local _organism="${4:-}"
+    local _isolate="${5:-}"
+    local _strain="${6:-}"
+    local _collectedBy="${7:-}"
+    local _collectionDate="${8:-}"
+    local _geographicLocationName="${9:-}"
+    local _isolationSource="${10:-}"
+    local _latitude="${11:-}"
+    local _longitude="${12:-}"
 
     local _http_code _response
     _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H 'Content-Type: application/json' -d "$( /usr/bin/jq -cn --arg sn "${_sampleName}" --arg desc "${_description}" --arg org "${_organism}" --arg iso "${_isolate}" --arg str "${_strain}" --arg cb "${_collectedBy}" --arg cd "${_collectionDate}" --arg gln "${_geographicLocationName}" --arg is "${_isolationSource}" --arg lat "${_latitude}" --arg lon "${_longitude}" '{sampleName: $sn, description: $desc, organism: $org} | if $iso != "" then . + {isolate: $iso} else . end | if $str != "" then . + {strain: $str} else . end | if $cb != "" then . + {collectedBy: $cb} else . end | if $cd != "" then . + {collectionDate: $cd} else . end | if $gln != "" then . + {geographicLocationName: $gln} else . end | if $is != "" then . + {isolationSource: $is} else . end | if $lat != "" then . + {latitude: $lat} else . end | if $lon != "" then . + {longitude: $lon} else . end' )" )
