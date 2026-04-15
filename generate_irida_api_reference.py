@@ -255,7 +255,7 @@ if __name__ == "__main__":
     build_pdf(pdf_out)
 
     # Render at 150 dpi
-    subprocess.run(["pdftoppm", "-r", "150", pdf_out, "/home/claude/IRIDA_API_Reference_page"], check=True)
+    subprocess.run(["pdftoppm", "-r", "600", pdf_out, "/home/claude/IRIDA_API_Reference_page"], check=True)
 
     # Find pages
     import glob, os
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     last_row = int(rows[-1]) + 15 if len(rows) else combined.height
     cropped = combined.crop((0, 0, combined.width, last_row))  # +20px padding at bottom
 
-    cropped.save(png_out, dpi=(150,150))
+    cropped.save(png_out, dpi=(600,600))
     print(f"PNG written: {png_out} ({cropped.size})")
 
     # cleanup
