@@ -5,10 +5,10 @@ http://irida.vigasp.vetinst.no:8080/irida-23.01.3
 TEXT REFERENCE
 #####################################################################################
 
-/usr/bin/curl --silent -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token" -d "client_id=${IRIDA_CLIENT_ID}&client_secret=${IRIDA_CLIENT_SECRET}&grant_type=password&username=${IRIDA_USERNAME}&password=${IRIDA_PASSWORD}"
+/usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/oauth/token" -d "client_id=${IRIDA_CLIENT_ID}&client_secret=${IRIDA_CLIENT_SECRET}&grant_type=password&username=${IRIDA_USERNAME}&password=${IRIDA_PASSWORD}"
 
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/version" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/version" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/{id}" -H "Authorization: Bearer ${IRIDA_TOKEN}"
@@ -22,6 +22,7 @@ TEXT REFERENCE
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/{id}/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"userId":"username","role":"PROJECT_USER"}'
 /usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/{id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"name":"name","projectDescription":"description","organism":"organism"}'
 /usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/{id}/users/{username}" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/{id}/samples/{sampleId}" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}"
@@ -42,6 +43,7 @@ TEXT REFERENCE
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/{id}" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"layoutType":"PAIRED_END","sequencerType":"miseq","uploadStatus":"UPLOADING"}'
 /usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/{id}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"uploadStatus":"COMPLETE"}'
+/usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/{id}" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/analysisType/phylogenomics" -H "Authorization: Bearer ${IRIDA_TOKEN}"
@@ -60,42 +62,42 @@ TEXT REFERENCE
 EXAMPLES
 #####################################################################################
 
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/version" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/version" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/samples/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/users" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/hash" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/samples/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/users" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/analyses" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/hash" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/sequenceFiles/unpaired" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/assemblies" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/pairs/8980/files/17899" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/pairs/8980/files/17900" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/sequenceFiles/unpaired" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/metadata" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709/assemblies" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/pairs/8980/files/17899" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/pairs/8980/files/17900" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq"
 
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/24718" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/24718/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/42216" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/42216/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/24718" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/24718/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/42216" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/analysisSubmissions/42216/analysis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/gmarselis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
-/usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/gmarselis/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/gmarselis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/gmarselis/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
 #################################################################
-# POST - still under investigation
+# POST
 #################################################################
 
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"name":"projectName","projectDescription":"description","organism":"organism"}'
@@ -107,14 +109,16 @@ EXAMPLES
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"layoutType":"PAIRED_END","sequencerType":"miseq","uploadStatus":"UPLOADING"}'
 
 #################################################################
-# PATCH - still under investigation
+# PATCH
 #################################################################
 /usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"name":"Slush_Sub","projectDescription":"description","organism":"organism"}'
 /usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"sampleName":"Strain0016","description":"description","organism":"organism","strain":"strain","isolate":"isolate","latitude":"latitude","longitude":"longitude","geographicLocationName":"geographicLocationName","isolationSource":"isolationSource"}'
-/usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/1" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"uploadStatus":"COMPLETE"}'
+/usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/801" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"uploadStatus":"COMPLETE"}'
 
 #################################################################
-# DELETE - still under investigation
+# DELETE
 #################################################################
 /usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/users/gmarselis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/150/samples/11752" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 /usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles/17899" -H "Authorization: Bearer ${IRIDA_TOKEN}"
+/usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/801" -H "Authorization: Bearer ${IRIDA_TOKEN}"
