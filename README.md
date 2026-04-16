@@ -75,6 +75,7 @@ get_irida_token_admin
 | `get_irida_sample_unpaired_metadata`   | list single-end files for a sample. NOTE: workaround for broken `/sequenceFiles/unpaired` endpoint (see issue #4) |
 | `get_irida_sample_assemblies_metadata` | list assemblies for a sample                                                                     |
 | `get_irida_sample_fast5_metadata`      | list fast5 files for a sample                                                                    |
+| `get_irida_sample_projects`            | find all projects a sample belongs to by iterating all projects. NOTE: `/api/samples/{id}/projects` is not implemented in IRIDA 23.01.3 (returns 500). |
 | `create_irida_sample_in_project`       | create a new sample in a project                                                                 |
 | `mod_irida_sample`                     | update sample fields via PATCH. Patchable: sampleName, description, organism, collectionDate, collectedBy, strain, isolate, latitude, longitude, geographicLocationName, isolationSource. |
 | `delete_irida_sample_from_project`     | delete a sample from a project                                                                   |
@@ -118,6 +119,16 @@ get_irida_token_admin
 | `get_irida_users`         | list all IRIDA users with roles and email addresses. In theory, it requires admin token. (See issue #5)                                  |
 | `get_irida_user_projects` | list all projects a user is a member of via `GET /api/users/{username}/projects`                                                         |
 
+### Reporting
+
+| Function                          | Description                                                                                                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `get_irida_sample_counts`         | get sample count per project. No argument = all projects sorted by project id ascending. `--sort-by-samples` sorts by sample count ascending. NOTE: IRIDA 23.01.3 returns no pagination metadata on `/samples`; all samples must be fetched to count them. Slow on large instances. |
+| `get_irida_samples_by_organism`   | cross-project sample count grouped by organism string. Exposes inconsistent organism naming. Requires `--sort-by-samples` or `--sort-by-organism` (mutually exclusive). `--group` aggregates by organism showing project count and total samples. |
+| `get_irida_recent_uploads`        | list samples created in the last N days across all projects. `--since-days N`, default 30. NOTE: `createdDate` is accessible to any authenticated user regardless of role — full upload timeline is visible without admin token (see issue #12). |
+| `get_irida_stale_projects`        | list projects with no uploads in the last N days. `--since-days N`, default 30. Shows stale duration as `N days (X year(s) Y days)`. |
+| `get_irida_sample_projects`       | find all projects a sample belongs to by iterating all projects. NOTE: `/api/samples/{id}/projects` is not implemented in IRIDA 23.01.3. |
+
 ### Version
 
 | Function            | Description                  |
@@ -143,7 +154,7 @@ get_irida_token_admin
 
 ## Test scripts
 
-* `irida_function_tests.sh` - function test runner. Work in progress.
+* `test_functions.sh` - function test runner. Work in progress.
 * `irida_test_stress_analysis_output.sh` - stress test for analysis output retrieval. Note: this script can cause the IRIDA host to become unresponsive. Use with caution.
 
 ---
@@ -190,6 +201,12 @@ Returns HTTP 500 with `NullPointerException` in `SequencingObjectServiceImpl.rea
 (line 144). Fails regardless of file type (fast5, paired fastq) and regardless of admin or non-admin
 token. No workaround available via the REST API. See issue #4.
 
+### GET /api/samples/{id}/projects is not implemented
+
+Returns HTTP 500 with `NullPointerException` in `SampleSequencingObjectSpecification`. The endpoint
+does not exist in IRIDA 23.01.3 — the router falls through to an unrelated handler. `get_irida_sample_projects`
+emulates this behaviour by iterating all projects and checking for the sample ID in each.
+
 ### IRIDA fails silently under load
 
 IRIDA seems to assume that the software is running on bare metal. In the NREC virtual environment
@@ -221,6 +238,7 @@ following operations that the web UI restricts to admins or project managers:
 - `POST /api/sequencingrun` — create sequencing runs
 - `PATCH /api/sequencingrun/{id}` — update sequencing run fields including uploadStatus
 - `PATCH /api/projects/{id}` — update project metadata for member projects
+- `GET /api/projects/{id}/samples` — `createdDate` and `modifiedDate` are accessible to any authenticated user, exposing a full upload timeline across the entire instance without admin token
 
 The following endpoints correctly enforce access control:
 
