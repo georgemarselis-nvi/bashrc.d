@@ -1,0 +1,81 @@
+# get_irida_recent_uploads
+# list samples created in the last N days across all projects
+#
+# usage: get_irida_recent_uploads [--since-days N]
+#        default: 30 days
+#
+# example: get_irida_recent_uploads
+#          get_irida_recent_uploads --since-days 7
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+get_irida_recent_uploads() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    local _since_days=30 _http_code _response _tmp _spin_pid
+    local _spinner=( '|' '/' '-' '\\' )
+
+    _spin() { local i=0 ; while true ; do printf '\rplease wait, getting samples: %s ' "${_spinner[$((i++ % 4))]}" >&2 ; sleep 0.1 ; done ; }
+
+    for _arg in "$@"; do
+        case "${_arg}" in
+            --since-days) : ;;
+            [0-9]*) _since_days="${_arg}" ;;
+            *) echo "ERROR: unknown argument: ${_arg}" >&2 ; return 1 ;;
+        esac
+    done
+
+    local _cutoff_ms=$(( ( $(date +%s) - (_since_days * 86400) ) * 1000 ))
+
+    _tmp=$( mktemp )
+    _spin & _spin_pid=$!
+    /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp}"
+    kill "${_spin_pid}" 2>/dev/null ; wait "${_spin_pid}" 2>/dev/null ; printf '\r\033[K' >&2
+    _http_code=$( /usr/bin/tail -1 "${_tmp}" )
+    _response=$( /usr/bin/sed '$d' "${_tmp}" )
+    rm -f "${_tmp}"
+    case "${_http_code}" in
+        200) ;;
+        401) echo "ERROR: HTTP 401 - unauthorized" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+
+    local _rows="" _pid _pname _proj_response _proj_http _tmp2
+    local _projects=$( echo "${_response}" | /usr/bin/jq -r '.resource.resources[] | [.identifier, .name] | @tsv' )
+    while IFS=$'\t' read -r _pid _pname; do
+        _tmp2=$( mktemp )
+        _spin & _spin_pid=$!
+        /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_pid}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp2}"
+        kill "${_spin_pid}" 2>/dev/null ; wait "${_spin_pid}" 2>/dev/null ; printf '\r\033[K' >&2
+        _proj_http=$( /usr/bin/tail -1 "${_tmp2}" )
+        _proj_response=$( /usr/bin/sed '$d' "${_tmp2}" )
+        rm -f "${_tmp2}"
+        if [[ "${_proj_http}" == "200" ]]; then
+            local _new=$( echo "${_proj_response}" | /usr/bin/jq -r --argjson cutoff "${_cutoff_ms}" '[.resource.resources[] | select(.createdDate >= $cutoff) | {project: "'"${_pname}"'", sample: .sampleName, created: (.createdDate / 1000 | strftime("%Y-%m-%d"))}] | .[] | [.project, .sample, .created] | @tsv' )
+            [[ -n "${_new}" ]] && _rows+="${_new}"$'\n'
+        fi
+    done <<< "${_projects}"
+
+    [[ -z "${_rows}" ]] && { echo "no samples created in the last ${_since_days} days" ; return 0 ; }
+    printf '%s' "${_rows}" | /usr/bin/mlr --itsv --opprint label project,sample,created then sort -f created
+}
+
+_get_irida_recent_uploads_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $(compgen -W '--since-days' -- "${cur}") )
+}
+
+complete -F _get_irida_recent_uploads_complete get_irida_recent_uploads
