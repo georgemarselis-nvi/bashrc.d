@@ -43,7 +43,7 @@ get_irida_sample_counts() {
     if [[ -n "${_project_id}" ]]; then
         _tmp=$( mktemp )
         _spin & _spin_pid=$!
-        /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp}"
+        /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/projects/${_project_id}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp}"
         kill "${_spin_pid}" 2>/dev/null ; wait "${_spin_pid}" 2>/dev/null ; printf '\r\033[K' >&2
         _http_code=$( /usr/bin/tail -1 "${_tmp}" )
         _response=$( /usr/bin/sed '$d' "${_tmp}" )
@@ -59,7 +59,7 @@ get_irida_sample_counts() {
         local _proj_response _proj_http _projects _pid _pname _organism _count _rows=""
         _tmp=$( mktemp )
         _spin & _spin_pid=$!
-        /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp}"
+        /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp}"
         kill "${_spin_pid}" 2>/dev/null ; wait "${_spin_pid}" 2>/dev/null ; printf '\r\033[K' >&2
         _http_code=$( /usr/bin/tail -1 "${_tmp}" )
         _response=$( /usr/bin/sed '$d' "${_tmp}" )
@@ -74,7 +74,7 @@ get_irida_sample_counts() {
         while IFS=$'\t' read -r _pid _pname _organism; do
             _tmp=$( mktemp )
             _spin & _spin_pid=$!
-            /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${_pid}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp}"
+            /usr/bin/curl --silent --write-out '\n%{http_code}' -X GET "${IRIDA_BASE_URL}/api/projects/${_pid}/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" > "${_tmp}"
             kill "${_spin_pid}" 2>/dev/null ; wait "${_spin_pid}" 2>/dev/null ; printf '\r\033[K' >&2
             _proj_http=$( /usr/bin/tail -1 "${_tmp}" )
             _proj_response=$( /usr/bin/sed '$d' "${_tmp}" )
