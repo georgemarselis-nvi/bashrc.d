@@ -1,0 +1,33 @@
+# check_irida_session
+# check if IRIDA session cookie is valid by probing a lightweight /ajax/ endpoint
+#   returns 0 if session is valid, non-zero if not
+#
+# example: check_irida_session && echo "session valid"
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+check_irida_session() {
+    [[ $- == *i* ]] || return 0
+    [[ -z "${IRIDA_SESSION_FILE}" || "${IRIDA_SESSION_FILE}" == "null" ]] && { echo "ERROR: IRIDA_SESSION_FILE not set - run get_irida_session" >&2 ; return 1 ; }
+    [[ ! -f "${IRIDA_SESSION_FILE}" ]] && { echo "ERROR: session file not found: ${IRIDA_SESSION_FILE} - run get_irida_session" >&2 ; return 1 ; }
+    local _http_code
+    _http_code=$( /usr/bin/curl --silent --write-out '%{http_code}' -o /dev/null --cookie "${IRIDA_SESSION_FILE}" "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/projects" )
+    case "${_http_code}" in
+        200) return 0 ;;
+        302) echo "ERROR: session expired or invalid - run get_irida_session" >&2 ; return 1 ;;
+        403) echo "ERROR: session valid but access denied to /ajax/projects" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code} checking session" >&2 ; return 1 ;;
+    esac
+}

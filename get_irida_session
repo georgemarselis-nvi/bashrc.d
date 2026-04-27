@@ -1,0 +1,54 @@
+# get_irida_session
+# perform form login to IRIDA and store session cookie for /ajax/ endpoint access
+# reads credentials from Bitwarden via bw serve (must be running on 127.0.0.1:8087)
+# exports IRIDA_SESSION_FILE pointing to the cookie jar
+#
+# NOTE: IRIDA's /login page is a React SPA - no HTML form, no CSRF token required.
+#       Spring Security accepts a direct form POST to /login with no pre-flight.
+#       302 to /irida-23.01.3/ = success; 302 to /login?error=true = bad credentials.
+#
+# example: get_irida_session && echo "session: ${IRIDA_SESSION_FILE}"
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+get_irida_session() {
+    check_bitwarden_serve    || { /usr/bin/printf "bw-serve.service not running; start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh\n" ; return 1 ; }
+    # DO NOT ADD A CHECK FOR THE SESSION HERE. WE ARE GENERATING THE SESSION NOW.
+    check_irida_connectivity || return 1
+    export IRIDA_SESSION_FILE=null
+    local _session_dir="${XDG_RUNTIME_DIR}/irida"
+    local _session_file="${_session_dir}/irida_session.txt"
+    /usr/bin/mkdir -p "${_session_dir}" && /usr/bin/chmod 700 "${_session_dir}"
+    [[ -f "${_session_file}" ]] && /usr/bin/rm -f "${_session_file}"
+    local BW_URL="http://127.0.0.1:8087"
+    local BW_ITEM="772acf18-2e78-44a9-9fb8-b41500c8c864"
+    local BW_DATA
+    BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
+    [[ $( echo "${BW_DATA}" | /usr/bin/jq -r '.success' ) != "true" ]] && { echo "ERROR: failed to retrieve Bitwarden item ${BW_ITEM}" >&2 ; return 1 ; }
+    local USERNAME=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username' | /usr/bin/tr -d '\r' )
+    local PASSWORD=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password' | /usr/bin/tr -d '\r' )
+    local _http_code _location
+    read -r _http_code _location <<< "$( /usr/bin/curl --silent --write-out '%{http_code} %{redirect_url}' -o /dev/null --cookie-jar "${_session_file}" -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/login" -H "Content-Type: application/x-www-form-urlencoded" -d "username=${USERNAME}&password=$( /usr/bin/urlencode "${PASSWORD}" )" )"
+    /usr/bin/chmod 600 "${_session_file}"
+    case "${_http_code}" in
+        302) ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code} during login" >&2 ; return 1 ;;
+    esac
+    echo "${_location}" | /usr/bin/grep -q 'error=true' && { echo "ERROR: login failed - bad credentials" >&2 ; return 1 ; }
+    export IRIDA_SESSION_FILE="${_session_file}"
+}
+
+# turn off tab completing as a hint to the user
+complete get_irida_session
