@@ -69,6 +69,7 @@ SECTIONS = [
         ("GET",    "/api/projects/{id}",                      "Get a single project by ID"),
         ("GET",    "/api/projects/{id}/samples",              "List all samples in a project"),
         ("GET",    "/api/projects/{id}/samples/metadata",     "Get metadata for all samples in a project"),
+        ("GET",    "/api/projects/{id}/samples/bySampleName", "Get a single sample by exact name within a project. Query param: sampleName=. Issues 302 redirect to /api/samples/{id} - requires following redirect. NOT documented in IRIDA REST API reference. Discovered via irida-uploader source code."),
         ("GET",    "/api/projects/{id}/users",                "List all users with access to a project"),
         ("GET",    "/api/projects/{id}/analyses",             "List analyses shared with a project"),
         ("GET",    "/api/projects/{id}/hash",                 "Get project hash - integer checksum for change detection. Store previous hash to detect changes; value alone is not useful without a baseline."),
@@ -186,9 +187,8 @@ def build_pdf(output_path):
     T = 28*mm   # room for canvas-drawn header
     B = 12*mm
 
-    # Use a very tall page — we'll crop the PNG after
     PAGE_W = 210*mm
-    PAGE_H = 580*mm   # tall enough for all content
+    PAGE_H = 600*mm   # slightly taller to accommodate new endpoint
 
     doc = BaseDocTemplate(
         output_path,
@@ -246,7 +246,8 @@ def build_pdf(output_path):
 
 
 if __name__ == "__main__":
-    import sys, subprocess
+    import sys, subprocess, glob, os
+    import numpy as np
     from PIL import Image
 
     pdf_out = "/home/claude/IRIDA_API_Reference.pdf"
@@ -254,11 +255,8 @@ if __name__ == "__main__":
 
     build_pdf(pdf_out)
 
-    # Render at 150 dpi
     subprocess.run(["pdftoppm", "-r", "600", pdf_out, "/home/claude/IRIDA_API_Reference_page"], check=True)
 
-    # Find pages
-    import glob, os
     pages = sorted(glob.glob("/home/claude/IRIDA_API_Reference_page*.ppm"))
 
     imgs = [Image.open(p) for p in pages]
@@ -270,19 +268,14 @@ if __name__ == "__main__":
         combined.paste(img, (0, y))
         y += img.height
 
-    # Crop bottom whitespace
-    bbox = combined.getbbox()
-    # tight crop using numpy
-    import numpy as np
-    arr = __import__("numpy").array(combined)
-    not_white = __import__("numpy").any(arr < 248, axis=2)
-    rows = __import__("numpy").where(not_white.any(axis=1))[0]
+    arr = np.array(combined)
+    not_white = np.any(arr < 248, axis=2)
+    rows = np.where(not_white.any(axis=1))[0]
     last_row = int(rows[-1]) + 15 if len(rows) else combined.height
-    cropped = combined.crop((0, 0, combined.width, last_row))  # +20px padding at bottom
+    cropped = combined.crop((0, 0, combined.width, last_row))
 
     cropped.save(png_out, dpi=(600,600))
     print(f"PNG written: {png_out} ({cropped.size})")
 
-    # cleanup
     for p in pages:
         os.remove(p)
