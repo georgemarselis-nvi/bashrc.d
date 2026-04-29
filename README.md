@@ -69,6 +69,7 @@ get_irida_token_admin
 | Function                               | Description                                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `get_irida_samples`                    | list samples in a project                                                                        |
+| `get_irida_sample_by_name`             | get a single sample by exact name within a project via undocumented `GET /api/projects/{id}/samples/bySampleName`. Issues 302 redirect — follows automatically. Exact match only, partial names return 404. |
 | `get_irida_sample_metadata`            | get metadata for a single sample                                                                 |
 | `get_irida_sample_files_metadata`      | list sequence files for a sample                                                                 |
 | `get_irida_sample_pairs_metadata`      | list paired-end files for a sample                                                               |
