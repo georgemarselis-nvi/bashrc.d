@@ -1,0 +1,46 @@
+# get_irida_sample_by_name
+# gets a single sample by name within a project
+# uses undocumented GET /api/projects/{id}/samples/bySampleName?sampleName= endpoint
+# endpoint issues a 302 redirect to /api/samples/{id} - requires --location
+# PROJECT_ID is used for tab completion and the API call
+# SAMPLE_NAME is an exact match - partial names will return 404
+#
+# example: get_irida_sample_by_name [TAB once for project id] 67:Ecoli 2016-01-4169-1-2-1-1
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+get_irida_sample_by_name() {
+    check_irida_connectivity || return 1
+    check_irida_token        || return 1
+    [[ -z "${1}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_NAME" >&2 ; return 1 ; }
+    [[ -z "${2}" ]] && { echo "usage: ${FUNCNAME[0]} PROJECT_ID SAMPLE_NAME (missing SAMPLE_NAME)" >&2 ; return 1 ; }
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --location --write-out '\n%{http_code}' --request GET --header "Authorization: Bearer ${IRIDA_TOKEN}" --header "Accept: application/json" "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/${1%%:*}/samples/bySampleName?sampleName=${2}" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) echo "${_response}" | /usr/bin/jq '{id: .resource.identifier, name: .resource.sampleName, label: .resource.label, description: .resource.description, organism: .resource.organism, isolate: .resource.isolate, strain: .resource.strain, collected_by: .resource.collectedBy, collection_date: (if .resource.collectionDate then (.resource.collectionDate / 1000 | strftime("%Y-%m-%d")) else null end), location: .resource.geographicLocationName, isolation_source: .resource.isolationSource, latitude: .resource.latitude, longitude: .resource.longitude, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), modified: (.resource.modifiedDate / 1000 | strftime("%Y-%m-%d"))}' | /usr/bin/mlr --ijson --opprint cat ;;
+        403) echo "ERROR: HTTP 403 - project ${1%%:*} access denied" >&2 ; return 1 ;;
+        404) echo "ERROR: HTTP 404 - sample '${2}' not found in project ${1%%:*}" >&2 ; return 1 ;;
+        500) echo "ERROR: IRIDA internal server error" >&2 ; return 1 ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 1 ;;
+    esac
+}
+
+complete -F _irida_projects_complete get_irida_sample_by_name
+
+# NOTE: /api/projects/{id}/samples/bySampleName is not documented in the IRIDA REST API reference.
+# Discovered by reading irida-uploader api_calls.py source code. Requires --location to follow
+# the 302 redirect to /api/samples/{id}. Exact name match only - partial names return 404.
