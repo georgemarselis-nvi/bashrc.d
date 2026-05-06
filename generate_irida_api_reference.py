@@ -26,10 +26,12 @@ C_GET    = colors.HexColor("#4CAF50")
 C_POST   = colors.HexColor("#2196F3")
 C_PATCH  = colors.HexColor("#FF9800")
 C_DELETE = colors.HexColor("#F44336")
+C_AJAX   = colors.HexColor("#9C27B0")
 C_WHITE  = colors.white
 C_LIGHT  = colors.HexColor("#F5F5F5")
 C_AUTHOR = colors.HexColor("#AAAAAA")
 C_LINK   = colors.HexColor("#1565C0")
+C_HEAD   = colors.HexColor("#1A237E")
 C_BLACK  = colors.black
 
 METHOD_COLORS = {
@@ -37,21 +39,22 @@ METHOD_COLORS = {
     "POST":   C_POST,
     "PATCH":  C_PATCH,
     "DELETE": C_DELETE,
+    "AJAX":   C_AJAX,
 }
 
 # ---------------------------------------------------------------------------
-# Styles
+# Styles - matched to original PNG
 # ---------------------------------------------------------------------------
 S_SECTION = ParagraphStyle("section", fontSize=11, fontName="Helvetica-Bold",
-                            spaceBefore=5, spaceAfter=2, textColor=C_BLACK)
+                            spaceBefore=5, spaceAfter=2, textColor=C_HEAD)
 S_METHOD  = ParagraphStyle("method",  fontSize=7.5, fontName="Helvetica-Bold",
                             alignment=TA_CENTER, textColor=C_WHITE)
-S_PATH    = ParagraphStyle("path",    fontSize=6.5, fontName="Courier",
+S_PATH    = ParagraphStyle("path",    fontSize=7.5, fontName="Helvetica",
                             textColor=C_BLACK)
-S_DESC      = ParagraphStyle("desc",      fontSize=7.0, fontName="Helvetica",
-                              leading=9, textColor=C_BLACK)
-S_DESC_WARN = ParagraphStyle("desc_warn", fontSize=7.0, fontName="Helvetica",
-                              leading=9, textColor=colors.HexColor("#C62828"))
+S_DESC      = ParagraphStyle("desc",      fontSize=7.5, fontName="Helvetica",
+                              leading=10, textColor=C_BLACK)
+S_DESC_WARN = ParagraphStyle("desc_warn", fontSize=7.5, fontName="Helvetica",
+                              leading=10, textColor=colors.HexColor("#C62828"))
 S_FOOTER  = ParagraphStyle("footer",  fontSize=6.5, fontName="Helvetica",
                             alignment=TA_CENTER, textColor=C_AUTHOR)
 
@@ -62,53 +65,73 @@ SECTIONS = [
     ("Authentication", [
         ("POST", "/api/oauth/token",
          "Get bearer token. Params: client_id, client_secret, grant_type=password, username, password. "
-         "Token valid for configured duration (default 12h). Include in all requests as: Authorization: Bearer {token}"),
+         "Token valid for configured duration (default 12h). Include in all requests as: Authorization: Bearer {token}."),
     ]),
     ("Projects", [
         ("GET",    "/api/projects",                           "List all projects the authenticated user has access to"),
         ("GET",    "/api/projects/{id}",                      "Get a single project by ID"),
         ("GET",    "/api/projects/{id}/samples",              "List all samples in a project"),
         ("GET",    "/api/projects/{id}/samples/metadata",     "Get metadata for all samples in a project"),
-        ("GET",    "/api/projects/{id}/samples/bySampleName", "Get a single sample by exact name within a project. Query param: sampleName=. Issues 302 redirect to /api/samples/{id} - requires following redirect. NOT documented in IRIDA REST API reference. Discovered via irida-uploader source code."),
+        ("GET",    "/api/projects/{id}/samples/bySampleName", "Undocumented endpoint. Requires --location for 302 redirect. Exact name match only, partial names return 404."),
         ("GET",    "/api/projects/{id}/users",                "List all users with access to a project"),
         ("GET",    "/api/projects/{id}/analyses",             "List analyses shared with a project"),
-        ("GET",    "/api/projects/{id}/hash",                 "Get project hash - integer checksum for change detection. Store previous hash to detect changes; value alone is not useful without a baseline."),
-        ("POST",   "/api/projects",                           "Create a new project. Required: name (min 5 chars). Optional: projectDescription, organism"),
-        ("POST",   "/api/projects/{id}/samples",              "Create a new sample in a project. Required: sampleName (min 3 chars). Optional: organism, description, collectionDate, collectedBy"),
-        ("POST",   "/api/projects/{id}/users",                "Add a user to a project. Required: userId (username). Optional: role (PROJECT_USER | PROJECT_OWNER)"),
-        ("PATCH",  "/api/projects/{id}",                      "Update project properties. Fields: name, projectDescription, organism"),
+        ("GET",    "/api/projects/{id}/hash",
+         "Get project hash - integer checksum for change detection. Store previous hash to detect changes; value alone is not useful without a baseline."),
+        ("POST",   "/api/projects",
+         "Create a new project. Required: name (min 5 chars). Optional: projectDescription, organism"),
+        ("POST",   "/api/projects/{id}/samples",
+         "Create a new sample in a project. Required: sampleName (min 3 chars). Optional: organism, description, collectionDate, collectedBy"),
+        ("POST",   "/api/projects/{id}/users",
+         "Add a user to a project. Required: userId (username). Optional: role (PROJECT_USER | PROJECT_OWNER)"),
+        ("PATCH",  "/api/projects/{id}",
+         "Update project properties. Fields: name, projectDescription, organism"),
         ("DELETE", "/api/projects/{id}/users/{username}",     "Remove a user from a project"),
-        ("DELETE", "/api/projects/{id}/samples/{sampleId}",   "Remove a sample from a project. Sample and sequence files are NOT deleted from IRIDA storage."),
+        ("DELETE", "/api/projects/{id}/samples/{sampleId}",
+         "Remove a sample from a project. Sample and sequence files are NOT deleted from IRIDA storage."),
     ]),
     ("Samples", [
         ("GET",   "/api/samples/{id}",                        "Get full metadata for a single sample"),
-        ("GET",   "/api/samples/{id}/sequenceFiles",          "List all sequence files for a sample (single-end + paired-end). Does not surface pair identifier - call /pairs separately to get pair_id for downloads."),
+        ("GET",   "/api/samples/{id}/sequenceFiles",
+         "List all sequence files for a sample (single-end + paired-end). Does not surface pair identifier - call /pairs separately to get pair_id for downloads."),
         ("GET",   "/api/samples/{id}/sequenceFiles/pairs",    "List paired-end sequence files only"),
-        ("GET",   "/api/samples/{id}/sequenceFiles/unpaired", "\u25a0 BUG (IRIDA 23.01.3): returns HTTP 500. Servlet parses \u201cunpaired\u201d as Long fileId (NumberFormatException). Workaround: filter /sequenceFiles excluding IDs in /pairs. See issue #4."),
+        ("GET",   "/api/samples/{id}/sequenceFiles/unpaired",
+         '\u25a0 BUG (IRIDA 23.01.3): returns HTTP 500. Servlet parses "unpaired" as Long fileId (NumberFormatException). Workaround: filter /sequenceFiles excluding IDs in /pairs. See issue #4.'),
         ("GET",   "/api/samples/{id}/sequenceFiles/fast5",    "List FAST5 files for a sample"),
-        ("GET",   "/api/samples/{id}/metadata",               "Get unstructured key-value metadata for a sample (separate from structured fields at /api/samples/{id}). See issue #7."),
-        ("GET",   "/api/samples/{id}/assemblies",             "List assemblies for a sample (populated only by IRIDA pipeline runs)"),
-        ("PATCH", "/api/samples/{id}",                        "Update sample metadata: sampleName, description, organism, collectionDate, collectedBy, strain, isolate, latitude, longitude, geographicLocationName, isolationSource"),
+        ("GET",   "/api/samples/{id}/metadata",
+         "Get unstructured key-value metadata for a sample (separate from structured fields at /api/samples/{id}). See issue #7."),
+        ("GET",   "/api/samples/{id}/assemblies",
+         "List assemblies for a sample (populated only by IRIDA pipeline runs)"),
+        ("PATCH", "/api/samples/{id}",
+         "Update sample metadata: sampleName, description, organism, collectionDate, collectedBy, strain, isolate, latitude, longitude, geographicLocationName, isolationSource"),
     ]),
     ("Sequence Files", [
         ("GET",    "/api/samples/{id}/pairs/{pairId}/files/{fileId}",
          "Get or download an individual sequence file. Requires Accept: application/fastq to download. "
          "fileName carries R1/R2 convention. NOTE: ONLY endpoint where Accept header has effect - all others return text/plain regardless."),
-        ("POST",   "/api/samples/{id}/sequenceFiles",          "Upload a single-end FASTQ file. Multipart form field: file=@/path/to/file.fastq.gz"),
-        ("POST",   "/api/samples/{id}/sequenceFiles/pairs",    "Upload a paired-end FASTQ pair. Multipart form fields: file1=@R1.fastq.gz file2=@R2.fastq.gz"),
-        ("POST",   "/api/samples/{id}/sequenceFiles/fast5",    "Upload a FAST5 file. Multipart form field: file=@/path/to/file.fast5"),
-        ("DELETE", "/api/samples/{id}/sequenceFiles/{fileId}", "Delete a sequence file from a sample"),
+        ("POST",   "/api/samples/{id}/sequenceFiles",
+         "Upload a single-end FASTQ file. Multipart form field: file=@/path/to/file.fastq.gz"),
+        ("POST",   "/api/samples/{id}/sequenceFiles/pairs",
+         "Upload a paired-end FASTQ pair. Multipart form fields: file1=@R1.fastq.gz file2=@R2.fastq.gz"),
+        ("POST",   "/api/samples/{id}/sequenceFiles/fast5",
+         "Upload a FAST5 file. Multipart form field: file=@/path/to/file.fast5"),
+        ("DELETE", "/api/samples/{id}/sequenceFiles/{fileId}",
+         "Delete a sequence file from a sample"),
     ]),
     ("Sequencing Runs (admin only)", [
-        ("GET",    "/api/sequencingrun",       "\u25a0 BUG (IRIDA 23.01.3): HATEOAS link points to /api/sequencingrun/miseqrun which throws HTTP 500 - same routing bug as /unpaired (NumberFormatException). See issue #6."),
-        ("GET",    "/api/sequencingrun/{id}",  "Get a single sequencing run by ID"),
-        ("POST",   "/api/sequencingrun",       "Create a sequencing run. Required: layoutType (SINGLE_END | PAIRED_END), sequencerType (miseq | nextseq | miniseq | directory). uploadStatus auto-set to UPLOADING."),
-        ("PATCH",  "/api/sequencingrun/{id}",  "Update sequencing run uploadStatus. Values: UPLOADING | COMPLETE | ERROR"),
-        ("DELETE", "/api/sequencingrun/{id}",  "Delete a sequencing run. Requires admin token. Confirmed working on VIGASP 23.01.3."),
+        ("GET",    "/api/sequencingrun",
+         "List all sequencing runs. Returns empty resources array for non-admin tokens."),
+        ("GET",    "/api/sequencingrun/{id}",
+         "\u25a0 BUG (IRIDA 23.01.3): HATEOAS link points to /api/sequencingrun/miseqrun which throws HTTP 500 - same routing bug as /unpaired (NumberFormatException). See issue #6."),
+        ("POST",   "/api/sequencingrun",
+         "Create a sequencing run. Required: layoutType (SINGLE_END | PAIRED_END), sequencerType (miseq | nextseq | miniseq | directory). uploadStatus auto-set to UPLOADING."),
+        ("PATCH",  "/api/sequencingrun/{id}",
+         "Update sequencing run uploadStatus. Values: UPLOADING | COMPLETE | ERROR"),
+        ("DELETE", "/api/sequencingrun/{id}",
+         "Delete a sequencing run. Requires admin token. Confirmed working on VIGASP 23.01.3."),
     ]),
     ("Analysis Submissions", [
         ("GET", "/api/analysisSubmissions",
-         "\u25a0 SLOW: queries Galaxy synchronously per submission - can saturate all uwsgi workers making IRIDA unresponsive. See issue #8. List all analysis submissions for the current user"),
+         "List all analysis submissions for the current user"),
         ("GET", "/api/analysisSubmissions/analysisType/phylogenomics",
          "List phylogenomics analyses. \u25a0 SLOW: queries Galaxy synchronously per submission - can saturate all uwsgi workers making IRIDA unresponsive. See issue #8."),
         ("GET", "/api/analysisSubmissions/analysisType/assembly",
@@ -118,7 +141,24 @@ SECTIONS = [
         ("GET", "/api/analysisSubmissions/{id}",
          "Get a single analysis submission. NOTE: analysisType field is NOT present here - only available via /{id}/analysis when state=COMPLETED."),
         ("GET", "/api/analysisSubmissions/{id}/analysis",
-         "Get completed analysis outputs (only when state=COMPLETED). Contains analysisType and HATEOAS links to output files. IRIDA ignores Accept header - all output files returned as text/plain."),
+         "Get completed analysis outputs (only when state=COMPLETED). Contains analysisType and HATEOAS links to output files. "
+         "IRIDA ignores Accept header - all output files returned as text/plain."),
+    ]),
+    ("AJAX Endpoints (undocumented, session auth required - no Bearer token)", [
+        ("AJAX", "/ajax/analyses/queue",
+         "Get running and queued analysis counts. Returns {\"running\": N, \"queued\": N}. "
+         "Pure DB query via analysisSubmissionRepository.countByAnalysisState() - no Galaxy roundtrip. "
+         "Auth: @PreAuthorize(\"hasRole('ROLE_USER')\") - any authenticated user. Safe to poll. Discovered 2026-05-06."),
+        ("AJAX", "/ajax/analyses/states",
+         "List all possible AnalysisState enum values with localized labels. Reference data for UI dropdowns."),
+        ("AJAX", "/ajax/analyses/types",
+         "List registered workflow types (e.g. assembly, phylogenomics, sistr)."),
+        ("AJAX", "/ajax/analyses/list",
+         "Paginated analysis table. POST with filter/sort/page params. Powers the web UI analyses table."),
+        ("AJAX", "/ajax/analyses/{submissionId}/updated-table-progress",
+         "Get updated state and duration for a single analysis submission."),
+        ("AJAX", "/ajax/projects/associated/list?projectId={id}",
+         "List associated projects for a given project. Discovered 2026-04-29 via access log."),
     ]),
     ("Users (documented as admin-only - confirmed accessible with unprivileged token, see issue #5)", [
         ("GET", "/api/users",                     "List all users in the system"),
@@ -132,7 +172,8 @@ SECTIONS = [
 ]
 
 FOOTER = (
-    "All endpoints require: Authorization: Bearer {IRIDA_TOKEN} | "
+    "REST endpoints require: Authorization: Bearer {IRIDA_TOKEN} | "
+    "AJAX endpoints require: JSESSIONID session cookie | "
     "Responses are JSON (Accept: application/json) | "
     "Timestamps are milliseconds since epoch | "
     "403 = not permitted | 401 = no token | 405 = verb not supported"
@@ -169,13 +210,13 @@ class HeaderCanvas(pdfcanvas.Canvas):
 
         # title
         self.setFont("Helvetica-Bold", 22)
-        self.setFillColor(C_BLACK)
+        self.setFillColor(C_HEAD)
         self.drawCentredString(w/2, top - 30, "IRIDA REST API Reference")
 
-        # link
+        # link - no http:// prefix to match original
         self.setFont("Helvetica", 9)
         self.setFillColor(C_LINK)
-        self.drawCentredString(w/2, top - 44, "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api")
+        self.drawCentredString(w/2, top - 44, "irida.vigasp.vetinst.no:8080/irida-23.01.3/api")
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +229,7 @@ def build_pdf(output_path):
     B = 12*mm
 
     PAGE_W = 210*mm
-    PAGE_H = 600*mm   # slightly taller to accommodate new endpoint
+    PAGE_H = 650*mm   # tall enough for all sections including AJAX
 
     doc = BaseDocTemplate(
         output_path,
@@ -220,12 +261,12 @@ def build_pdf(output_path):
         t = Table(rows, colWidths=col_widths)
 
         cmds = [
-            ("VALIGN",       (0,0), (-1,-1), "MIDDLE"),
+            ("VALIGN",       (0,0), (-1,-1), "TOP"),
             ("TOPPADDING",   (0,0), (-1,-1), 3),
             ("BOTTOMPADDING",(0,0), (-1,-1), 3),
             ("LEFTPADDING",  (0,0), (-1,-1), 4),
             ("RIGHTPADDING", (0,0), (-1,-1), 4),
-            ("GRID",         (0,0), (-1,-1), 0.25, colors.HexColor("#DDDDDD")),
+            ("LINEBELOW",    (0,0), (-1,-1), 0.25, colors.HexColor("#E0E0E0")),
             ("ROWBACKGROUNDS",(0,0),(-1,-1), [C_WHITE, C_LIGHT]),
         ]
         for i, mc in method_colors:
