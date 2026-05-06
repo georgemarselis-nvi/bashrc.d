@@ -41,6 +41,7 @@ get_irida_token_admin
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `get_irida_token`       | authenticate as regular user and export `IRIDA_TOKEN`                                                                                              |
 | `get_irida_token_admin` | authenticate as admin and export `IRIDA_TOKEN`. Shows WARNING banner with 15-second abort countdown. Use `--skip-countdown` to skip the countdown. |
+| `get_irida_session`     | perform form login to IRIDA and store session cookie for `/ajax/` endpoint access. Exports `IRIDA_SESSION_FILE` pointing to the cookie jar. No CSRF token required - Spring Security accepts direct form POST. |
 
 ### Connectivity checks
 
@@ -49,6 +50,7 @@ get_irida_token_admin
 | `check_bitwarden_serve`    | check if `bw-serve.service` is running     |
 | `check_fortigate_vpn`      | check if FortiClient VPN is connected      |
 | `check_irida_connectivity` | check if IRIDA server is reachable         |
+| `check_irida_session`      | check if IRIDA session cookie is valid by probing a lightweight `/ajax/` endpoint. Returns 0 if valid, non-zero if expired or missing. |
 | `check_irida_token`        | check if `IRIDA_TOKEN` is set and non-null |
 
 ### Projects
@@ -69,7 +71,8 @@ get_irida_token_admin
 | Function                               | Description                                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `get_irida_samples`                    | list samples in a project                                                                        |
-| `get_irida_sample_by_name`             | get a single sample by exact name within a project via undocumented `GET /api/projects/{id}/samples/bySampleName`. Issues 302 redirect — follows automatically. Exact match only, partial names return 404. |
+| `get_irida_sample_by_name`             | get a single sample by exact name within a project via undocumented `GET /api/projects/{id}/samples/bySampleName`. Issues 302 redirect - follows automatically. Exact match only, partial names return 404. |
+| `search_irida_by_sample_name`          | search all accessible projects for a sample by sampleName. Iterates all projects and filters client-side. Admin token required for instance-wide results. Slow - scales with total number of projects. |
 | `get_irida_sample_metadata`            | get metadata for a single sample                                                                 |
 | `get_irida_sample_files_metadata`      | list sequence files for a sample                                                                 |
 | `get_irida_sample_pairs_metadata`      | list paired-end files for a sample                                                               |
@@ -89,6 +92,7 @@ get_irida_token_admin
 | `get_irida_download_sequence_pair` | download both R1 and R2 for a sample pair                                                                       |
 | `upload_irida_fastq_pair`          | upload a paired-end fastq pair to a sample via `POST /api/samples/{id}/pairs`. Confirmed working as non-admin (RBAC gap, see issue #12). Sequencing run must be in UPLOADING state. |
 | `upload_irida_fast5`               | upload a fast5 file to a sample via `POST /api/samples/{id}/fast5`. Confirmed working as non-admin (RBAC gap, see issue #12). |
+| `upload_irida_sequence_file`       | upload a single-end fastq file to a sample via `POST /api/samples/{id}/sequenceFiles`.                                                  |
 | `delete_irida_sequence_file`       | delete a sequencing object from a sample via `DELETE /api/samples/{id}/{objectType}/{objectId}`. objectType: unpaired, pairs, fast5. objectId is the sequencing object ID, not the file ID. Confirmed working as non-admin (RBAC gap, see issue #12). NOTE: the documented path `DELETE /api/samples/{id}/sequenceFiles/{fileId}` is wrong and returns 500 (see issue #4). |
 
 ### Sequencing runs
@@ -105,20 +109,28 @@ get_irida_token_admin
 
 | Function                                 | Description                                                                                                                          |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `get_irida_analysis_submissions`         | list all analysis submissions. NOTE: blocks on Galaxy — cached output with 15-second countdown. See issue #4.                        |
+| `get_irida_analysis_submissions`         | list all analysis submissions. NOTE: blocks on Galaxy - cached output with 15-second countdown. See issue #4.                        |
 | `get_irida_analysis_submissions_by_type` | list analysis submissions by workflow type                                                                                           |
 | `get_irida_analysis_submission`          | get a single analysis submission by ID                                                                                               |
 | `get_irida_analysis_status`              | get status of an analysis submission                                                                                                 |
 | `get_irida_analysis_result`              | get the analysis result object for a completed submission via `GET /api/analysisSubmissions/{id}/analysis`                           |
 | `get_irida_analysis_results`             | get outputs of a completed analysis                                                                                                  |
 | `get_irida_analysis_output_files`        | list output files for an analysis                                                                                                    |
+| `get_irida_analysis_queue`               | get running and queued analysis counts via undocumented AJAX endpoint `GET /ajax/analyses/queue`. Pure DB query, no Galaxy roundtrip. Session auth (JSESSIONID), not Bearer token. Safe to poll. |
+| `is_irida_busy`                          | check if IRIDA has running or queued analyses. Returns exit code 0 if busy, 1 if idle, 2 on error. Uses same AJAX endpoint as `get_irida_analysis_queue`. |
 
 ### Users
 
-| Function                  | Description                                                                                                                              |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `get_irida_users`         | list all IRIDA users with roles and email addresses. In theory, it requires admin token. (See issue #5)                                  |
-| `get_irida_user_projects` | list all projects a user is a member of via `GET /api/users/{username}/projects`                                                         |
+| Function                       | Description                                                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_irida_users`              | list all IRIDA users with roles and email addresses. In theory, it requires admin token. (See issue #5)                                  |
+| `get_irida_user`               | get a single user by username or numeric ID. Shows user details and project memberships.                                                 |
+| `get_irida_user_projects`      | list all projects a user is a member of via `GET /api/users/{username}/projects`                                                         |
+| `create_irida_user`            | create a new IRIDA user. Requires admin token. Auto-generates password via `pwgen`.                                                      |
+| `mod_irida_user`               | update user fields via PATCH. Patchable: username, email, password, firstName, lastName, phoneNumber, enabled, systemRole, locale. Admin token required for other users. |
+| `delete_irida_user`            | delete a user by username. Requires admin token. 15-second countdown with confirmation prompt.                                           |
+| `add_irida_user_to_project`    | add a user to a project. Required: PROJECT_ID, USERNAME. Optional: role (PROJECT_USER or PROJECT_OWNER).                                |
+| `delete_irida_user_from_project` | remove a user from a project.                                                                                                          |
 
 ### Reporting
 
@@ -126,7 +138,7 @@ get_irida_token_admin
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `get_irida_sample_counts`         | get sample count per project. No argument = all projects sorted by project id ascending. `--sort-by-samples` sorts by sample count ascending. NOTE: IRIDA 23.01.3 returns no pagination metadata on `/samples`; all samples must be fetched to count them. Slow on large instances. |
 | `get_irida_samples_by_organism`   | cross-project sample count grouped by organism string. Exposes inconsistent organism naming. Requires `--sort-by-samples` or `--sort-by-organism` (mutually exclusive). `--group` aggregates by organism showing project count and total samples. |
-| `get_irida_recent_uploads`        | list samples created in the last N days across all projects. `--since-days N`, default 30. NOTE: `createdDate` is accessible to any authenticated user regardless of role — full upload timeline is visible without admin token (see issue #12). |
+| `get_irida_recent_uploads`        | list samples created in the last N days across all projects. `--since-days N`, default 30. NOTE: `createdDate` is accessible to any authenticated user regardless of role - full upload timeline is visible without admin token (see issue #12). |
 | `get_irida_stale_projects`        | list projects with no uploads in the last N days. `--since-days N`, default 30. Shows stale duration as `N days (X year(s) Y days)`. |
 | `get_irida_sample_projects`       | find all projects a sample belongs to by iterating all projects. NOTE: `/api/samples/{id}/projects` is not implemented in IRIDA 23.01.3. |
 
@@ -141,6 +153,7 @@ get_irida_token_admin
 | Function    | Description                         |
 | ----------- | ----------------------------------- |
 | `ldapwhois` | look up a user in Active Directory  |
+| `medl`      | look up a person in MEDL            |
 | `nird`      | get NIRD credentials from Bitwarden |
 | `saga`      | get SAGA credentials from Bitwarden |
 
@@ -205,7 +218,7 @@ token. No workaround available via the REST API. See issue #4.
 ### GET /api/samples/{id}/projects is not implemented
 
 Returns HTTP 500 with `NullPointerException` in `SampleSequencingObjectSpecification`. The endpoint
-does not exist in IRIDA 23.01.3 — the router falls through to an unrelated handler. `get_irida_sample_projects`
+does not exist in IRIDA 23.01.3 - the router falls through to an unrelated handler. `get_irida_sample_projects`
 emulates this behaviour by iterating all projects and checking for the sample ID in each.
 
 ### IRIDA fails silently under load
@@ -219,7 +232,7 @@ is no timeout or error returned to the client.
 
 ### IRIDA mangles UTF-8 in sequencing run fields
 
-Description and workflow fields containing non-ASCII characters (e.g. Norwegian æøå) are stored and
+Description and workflow fields containing non-ASCII characters (e.g. Norwegian aeoa) are stored and
 retrieved with garbled encoding. The terminal is UTF-8; the corruption originates server-side in IRIDA.
 Confirmed on VIGASP 23.01.3.
 
@@ -231,22 +244,22 @@ The IRIDA web UI restricts certain actions to admin or project manager roles. Th
 enforce the same restrictions. Any authenticated user with a valid Bearer token can perform the
 following operations that the web UI restricts to admins or project managers:
 
-- `POST /api/projects` — create projects
-- `POST /api/projects/{id}/users` — add any system user to any project they are a member of
-- `DELETE /api/projects/{id}/users/{username}` — remove any user from any project they are a member of
-- `POST /api/samples/{id}/pairs` — upload paired-end files to any accessible sample
-- `POST /api/samples/{id}/fast5` — upload fast5 files to any accessible sample
-- `POST /api/sequencingrun` — create sequencing runs
-- `PATCH /api/sequencingrun/{id}` — update sequencing run fields including uploadStatus
-- `PATCH /api/projects/{id}` — update project metadata for member projects
-- `GET /api/projects/{id}/samples` — `createdDate` and `modifiedDate` are accessible to any authenticated user, exposing a full upload timeline across the entire instance without admin token
+- `POST /api/projects` - create projects
+- `POST /api/projects/{id}/users` - add any system user to any project they are a member of
+- `DELETE /api/projects/{id}/users/{username}` - remove any user from any project they are a member of
+- `POST /api/samples/{id}/pairs` - upload paired-end files to any accessible sample
+- `POST /api/samples/{id}/fast5` - upload fast5 files to any accessible sample
+- `POST /api/sequencingrun` - create sequencing runs
+- `PATCH /api/sequencingrun/{id}` - update sequencing run fields including uploadStatus
+- `PATCH /api/projects/{id}` - update project metadata for member projects
+- `GET /api/projects/{id}/samples` - `createdDate` and `modifiedDate` are accessible to any authenticated user, exposing a full upload timeline across the entire instance without admin token
 
 The following endpoints correctly enforce access control:
 
-- `POST /api/users` — 403 as non-admin
-- `DELETE /api/users/{id}` — 403 as non-admin
-- `PATCH /api/users/{id}` — 200 for own user, 403 for other users
-- `POST /api/projects/{id}/samples` — 403 for non-member projects
+- `POST /api/users` - 403 as non-admin
+- `DELETE /api/users/{id}` - 403 as non-admin
+- `PATCH /api/users/{id}` - 200 for own user, 403 for other users
+- `POST /api/projects/{id}/samples` - 403 for non-member projects
 
 See issue #12 for full details and screen captures.
 
