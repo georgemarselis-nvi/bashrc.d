@@ -1,0 +1,64 @@
+# is_irida_busy
+# check if IRIDA has any running or queued analyses
+#
+# Returns 0 (true) if IRIDA is busy (running > 0 or queued > 0)
+# Returns 1 (false) if IRIDA is idle
+# Returns 2 on error
+#
+# usage: is_irida_busy
+#
+# example: is_irida_busy && echo "busy, wait" || echo "idle, go"
+#
+# Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+is_irida_busy() {
+    check_bitwarden_serve || { /usr/bin/printf "bw-serve.service not running; start it via\n\tsystemctl --user stop bw-serve.service\n\tsystemctl --user start bw-serve.service\n\t/usr/local/bin/vault_unlock.sh\n" ; return 2 ; }
+    check_irida_connectivity || return 2
+    local _cookie_jar
+    _cookie_jar=$( mktemp /tmp/irida_session.XXXXXX )
+    trap "rm -f '${_cookie_jar}'" RETURN
+    local BW_URL="http://127.0.0.1:8087"
+    local BW_ITEM="772acf18-2e78-44a9-9fb8-b41500c8c864"
+    local BW_DATA
+    BW_DATA=$( /usr/bin/curl --silent "${BW_URL}/object/item/${BW_ITEM}" )
+    [[ $( echo "${BW_DATA}" | /usr/bin/jq -r '.success' ) != "true" ]] && { echo "ERROR: failed to retrieve Bitwarden item ${BW_ITEM}" >&2 ; return 2 ; }
+    local _username=$( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.username' | /usr/bin/tr -d '\r' )
+    local _password=$( /usr/bin/urlencode $( echo "${BW_DATA}" | /usr/bin/jq -r '.data.login.password' | /usr/bin/tr -d '\r' ) )
+    /usr/bin/curl --silent --cookie-jar "${_cookie_jar}" --cookie "${_cookie_jar}" -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/login" -o /dev/null
+    local _login_http_code
+    _login_http_code=$( /usr/bin/curl --silent --cookie-jar "${_cookie_jar}" --cookie "${_cookie_jar}" -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/login" -d "username=${_username}&password=${_password}" -o /dev/null -w '%{http_code}' )
+    [[ "${_login_http_code}" != "302" ]] && { echo "ERROR: login failed with HTTP ${_login_http_code}" >&2 ; return 2 ; }
+    local _http_code _response
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' --cookie "${_cookie_jar}" "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/queue" )
+    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
+    _response=$( echo "${_response}" | /usr/bin/sed '$d' )
+    case "${_http_code}" in
+        200) ;;
+        *)   echo "ERROR: unexpected HTTP ${_http_code}" >&2 ; return 2 ;;
+    esac
+    local _running _queued
+    _running=$( echo "${_response}" | /usr/bin/jq -r '.running' )
+    _queued=$( echo "${_response}" | /usr/bin/jq -r '.queued' )
+    [[ "${_running}" -gt 0 || "${_queued}" -gt 0 ]] && return 0
+    return 1
+}
+
+complete is_irida_busy
+
+# NOTE: uses the same undocumented AJAX endpoint as get_irida_analysis_queue.
+# Returns exit code only, no stdout on success. Designed for use in conditionals:
+#   is_irida_busy && echo "wait" || echo "go"
+#   while is_irida_busy; do sleep 120; done
+# Exit codes: 0 = busy, 1 = idle, 2 = error (could not reach IRIDA or Bitwarden).
