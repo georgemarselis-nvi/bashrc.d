@@ -8,8 +8,7 @@
 # upload without run context.
 # Confirmed working as non-admin on VIGASP 23.01.3. RBAC gap - see GitHub issue #12.
 #
-# example: upload_irida_sequence_file 150:test_gmarselis 11745:ZZTEST_SAMPLE_DO_NOT_USE \
-#          /path/to/file.fastq
+# example: upload_irida_sequence_file 150:test_gmarselis 11745:ZZTEST_SAMPLE_DO_NOT_USE /path/to/file.fastq
 #
 # Copyright (C) 2026 George Marselis <george.marselis@vetinst.no>
 # This program is free software: you can redistribute it and/or modify
@@ -35,10 +34,7 @@ upload_irida_sequence_file() {
     [[ ! -f "${3:-}" ]] && { echo "ERROR: file not found: ${3}" >&2 ; return 1 ; }
     local _sample_id="${2%%:*}"
     local _http_code _response
-    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' \
-        -X POST "${IRIDA_BASE_URL}/api/samples/${_sample_id}/sequenceFiles" \
-        -H "Authorization: Bearer ${IRIDA_TOKEN}" \
-        -F "file=@${3}" )
+    _response=$( /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/samples/${_sample_id}/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@${3}" )
     _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
     _response=$(  echo "${_response}" | /usr/bin/sed '$d' )
     case "${_http_code}" in
