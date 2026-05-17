@@ -57,34 +57,75 @@ TEXT REFERENCE
 
 #####################################################################################
 
-AJAX ENDPOINTS (undocumented, session auth required - no Bearer token)
+AJAX ENDPOINTS (session auth required - no Bearer token)
 #####################################################################################
-# Session auth: GET /login for JSESSIONID cookie, POST /login with username+password, then use cookie.
+# Auth: POST /login with application/x-www-form-urlencoded (username + password).
+# Returns JSESSIONID cookie on 302 redirect. No CSRF preflight required.
+# Use cookie jar for subsequent requests.
+#
+# POST body format for table/search endpoints (AntTableRequest):
+#   {"pagination":{"current":1,"pageSize":10},"order":[{"property":"field","direction":"ascend"}],"search":[{"property":"field","value":"term"}]}
+# SearchRequest adds: "global": true/false
+#
+# Source: confirmed from IRIDA source code (development branch). Not all endpoints tested empirically.
 
-# Analysis queue - running and queued counts (no Galaxy roundtrip, safe to poll)
-# Source: AnalysesTableAjaxController.java - analysisSubmissionService.getAnalysisServiceStatus()
-# Auth: @PreAuthorize("hasRole('ROLE_USER')") - any authenticated user, no admin required
-# Impl: analysisSubmissionRepository.countByAnalysisState() - pure SQL COUNT, no Galaxy
-# Returns: {"running": N, "queued": N}
-# Discovered: 2026-05-06
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/queue"
+# AnalysesTableAjaxController - /ajax/analyses
+# Confirmed working: /ajax/analyses/queue
+GET  /ajax/analyses/queue                                           # Running/queued counts. Returns {"running":N,"queued":N}. Pure DB query, no Galaxy roundtrip. Safe to poll.
+GET  /ajax/analyses/states                                          # AnalysisState enum values with localized labels. From source, not tested.
+GET  /ajax/analyses/types                                           # Registered workflow types (assembly, phylogenomics, sistr, etc). From source, not tested.
+POST /ajax/analyses/list                                            # Paginated analysis table. POST with AntTableRequest body. From source, not tested.
+POST /ajax/analyses/delete                                          # Delete an analysis. From source, not tested.
+GET  /ajax/analyses/download/{id}                                   # Download analysis outputs. From source, not tested.
+GET  /ajax/analyses/{submissionId}/updated-table-progress           # Updated state and duration for a single submission. From source, not tested.
 
-# Analysis states - enum values with localized labels (reference data for UI dropdowns)
-# Returns: [{"label": "New", "state": "NEW"}, ...]
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/states"
+# AnalysesOutputsAjaxController - /ajax/analyses-outputs
+GET  /ajax/analyses-outputs/shared?projectId={id}                   # Shared single sample outputs for a project. From source, not tested.
+GET  /ajax/analyses-outputs/automated?projectId={id}                # Automated single sample outputs for a project. From source, not tested.
+GET  /ajax/analyses-outputs/user                                    # All analysis outputs for current user (no project filter). From source, not tested.
+POST /ajax/analyses-outputs/download/prepare                        # Prepare batch download selection. POST with list of output info. From source, not tested.
+GET  /ajax/analyses-outputs/download/selection                      # Download prepared batch. From source, not tested.
+GET  /ajax/analyses-outputs/download/file?analysisSubmissionId=&fileId=  # Download individual output file. From source, not tested.
 
-# Analysis types - registered workflow types
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/types"
+# AnalysisAjaxController - /ajax/analysis
+PATCH /ajax/analysis/update-email-pipeline-result                   # Toggle email notifications for pipeline completion/error. From source, not tested.
+GET   /ajax/analysis/details/{submissionId}                         # Analysis details (workflow, version, priority, duration, share status). From source, not tested.
+GET   /ajax/analysis/inputs/{submissionId}                          # Input files and samples for an analysis. From source, not tested.
+PATCH /ajax/analysis/update-analysis                                # Update analysis name or priority. From source, not tested.
+GET   /ajax/analysis/{id}/outputs                                   # List output files with metadata (size, tool, extension, first line). From source, not tested.
+GET   /ajax/analysis/{id}/outputs/{fileId}                          # Read output file contents (lines or byte chunks via seek/chunk params). From source, not tested.
+GET   /ajax/analysis/{submissionId}/job-errors                      # Galaxy job errors with Galaxy URL and history ID. From source, not tested.
+GET   /ajax/analysis/{submissionId}/share                           # List projects an analysis can be shared with. From source, not tested.
+POST  /ajax/analysis/{submissionId}/share                           # Share/unshare analysis with a project. From source, not tested.
+POST  /ajax/analysis/{submissionId}/save-results                    # Save analysis results back to samples. From source, not tested.
+GET   /ajax/analysis/sistr/{id}                                     # SISTR typing results. From source, not tested.
+GET   /ajax/analysis/delete/{analysisSubmissionId}                   # Delete an analysis submission. From source, not tested.
+GET   /ajax/analysis/download/{analysisSubmissionId}                 # Download all outputs as zip. From source, not tested.
+GET   /ajax/analysis/{submissionId}/newick                          # Newick tree file contents. From source, not tested.
+GET   /ajax/analysis/{submissionId}/image                           # Base64 encoded image output. From source, not tested.
+GET   /ajax/analysis/{submissionId}/metadata                        # Sample metadata for analysis. From source, not tested.
+GET   /ajax/analysis/{submissionId}/metadata-templates              # Metadata templates for analysis. From source, not tested.
+GET   /ajax/analysis/{submissionId}/metadata-template-fields?templateId=  # Fields for a metadata template. From source, not tested.
+GET   /ajax/analysis/{submissionId}/tree                            # Newick tree with validation. From source, not tested.
+GET   /ajax/analysis/{submissionId}/parseExcel?filename=&sheetIndex=  # Parse excel output file. From source, not tested.
+GET   /ajax/analysis/{submissionId}/provenance?filename=            # Tool execution provenance chain. From source, not tested.
+GET   /ajax/analysis/{submissionId}/updated-progress                # Current state and duration. From source, not tested.
+GET   /ajax/analysis/{submissionId}/analysis-details                # Full analysis info with sample/project associations. From source, not tested.
 
-# Analysis table - paginated list of submissions (POST with filter/sort/page params)
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/list"
+# SearchController - /ajax/search
+POST /ajax/search/projects                                          # Search projects. POST with SearchRequest body. From source, not tested.
+POST /ajax/search/samples                                           # Search samples. POST with SearchRequest body. From source, not tested.
 
-# Single analysis progress update
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/{submissionId}/updated-table-progress"
+# ProjectsController - /projects/ajax
+GET  /projects/ajax/taxonomy/search?searchTerm=                     # Taxonomy search. From source, not tested.
+GET  /projects/ajax/export?dtf=xlsx|csv&admin=                      # Export projects as xlsx or csv. From source, not tested.
 
-# Associated projects for a given project
-# Discovered: 2026-04-29
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/projects/associated/list?projectId={id}"
+# ProjectsAjaxController - /ajax/projects
+POST /ajax/projects/new                                             # Create new project. From source, not tested.
+GET  /ajax/projects                                                 # List projects (POST with AntTableRequest for filtering). From source, not tested.
+GET  /ajax/projects/roles                                           # List project roles. From source, not tested.
+GET  /ajax/projects/samples-share/projects                          # Projects available for sample sharing. From source, not tested.
+GET  /ajax/projects/associated/list?projectId={id}                  # Associated projects for a given project. Discovered via access log 2026-04-29. Confirmed working.
 
 
 #####################################################################################
@@ -127,7 +168,7 @@ EXAMPLES
 /usr/bin/curl --silent -X GET  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/users/gmarselis/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
 #################################################################
-# POST
+# POST - still under investigation
 #################################################################
 
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"name":"projectName","projectDescription":"description","organism":"organism"}'
@@ -139,30 +180,23 @@ EXAMPLES
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"layoutType":"PAIRED_END","sequencerType":"miseq","uploadStatus":"UPLOADING"}'
 
 #################################################################
-# PATCH
+# PATCH - still under investigation
 #################################################################
 /usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"name":"Slush_Sub","projectDescription":"description","organism":"organism"}'
 /usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/7709" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"sampleName":"Strain0016","description":"description","organism":"organism","strain":"strain","isolate":"isolate","latitude":"latitude","longitude":"longitude","geographicLocationName":"geographicLocationName","isolationSource":"isolationSource"}'
 /usr/bin/curl --silent -X PATCH  "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun/1" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"uploadStatus":"COMPLETE"}'
 
 #################################################################
-# DELETE
+# DELETE - still under investigation
 #################################################################
 /usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/users/gmarselis" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 /usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles/17899" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
 #################################################################
-# AJAX - session auth (discovered 2026-05-06)
+# AJAX - session auth (no Bearer token)
 #################################################################
-
 # Step 1: get session cookie
-/usr/bin/curl --silent --cookie-jar /tmp/irida_session.txt --cookie /tmp/irida_session.txt -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/login"
-# Step 2: authenticate the session
-/usr/bin/curl --silent --cookie-jar /tmp/irida_session.txt --cookie /tmp/irida_session.txt -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/login" -d "username=gmarselis&password=$(/usr/bin/urlencode 'password_here')"
-# Step 3: use the session
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/queue"
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/states"
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/types"
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/list"
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/24718/updated-table-progress"
-/usr/bin/curl --silent --cookie /tmp/irida_session.txt "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/projects/associated/list?projectId=105"
+/usr/bin/curl --silent -c ${XDG_RUNTIME_DIR}/irida/irida_session.txt -X POST "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/login" -d "username=${IRIDA_USERNAME}&password=${IRIDA_PASSWORD}"
+# Step 2: use session cookie
+/usr/bin/curl --silent -b ${XDG_RUNTIME_DIR}/irida/irida_session.txt -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/analyses/queue"
+/usr/bin/curl --silent -b ${XDG_RUNTIME_DIR}/irida/irida_session.txt -X GET "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/ajax/projects/associated/list?projectId=105"
