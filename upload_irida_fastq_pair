@@ -40,20 +40,30 @@ upload_irida_fastq_pair() {
     local _run_id="${3%%:*}"
     local _params="{\"miseqRunId\":\"${_run_id}\",\"layoutType\":\"PAIRED_END\"}"
     local _boundary="B0undary"
+    local _r1_size=$( /usr/bin/stat --format='%s' "${4}" )
+    local _r2_size=$( /usr/bin/stat --format='%s' "${5}" )
+    local _total_size=$(( _r1_size + _r2_size ))
+    local _total_mb=$(( _total_size / 1048576 ))
+    local _tmpfile
+    _tmpfile=$( mktemp /tmp/irida_upload.XXXXXX )
+    trap "rm -f '${_tmpfile}'" RETURN
+    local _spinner_label="uploading ${_total_mb}MB to sample ${_sample_id} on run ${_run_id}"
+    ( while true; do for _f in '|' '/' '-' '\'; do printf '\r%s %s' "${_f}" "${_spinner_label}" >&2; sleep 0.1; done; done ) & local _spinner_pid=$!
+    disown "${_spinner_pid}"
+    {
+        printf -- "--%s\r\nContent-Disposition: form-data; name=\"file1\"; filename=\"%s\"\r\nContent-Type: application/octet-stream\r\n\r\n" "${_boundary}" "$(basename "${4}")"
+        cat "${4}"
+        printf -- "\r\n--%s\r\nContent-Disposition: form-data; name=\"file2\"; filename=\"%s\"\r\nContent-Type: application/octet-stream\r\n\r\n" "${_boundary}" "$(basename "${5}")"
+        cat "${5}"
+        printf -- "\r\n--%s\r\nContent-Disposition: form-data; name=\"parameters1\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${_boundary}" "${_params}"
+        printf -- "--%s\r\nContent-Disposition: form-data; name=\"parameters2\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${_boundary}" "${_params}"
+        printf -- "--%s--\r\n" "${_boundary}"
+    } | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/samples/${_sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${_boundary}" --data-binary @- > "${_tmpfile}"
+    kill "${_spinner_pid}" 2>/dev/null
+    printf '\r%80s\r' '' >&2
     local _http_code _response
-    _response=$(
-        {
-            printf -- "--%s\r\nContent-Disposition: form-data; name=\"file1\"; filename=\"%s\"\r\nContent-Type: application/octet-stream\r\n\r\n" "${_boundary}" "$(basename "${4}")"
-            cat "${4}"
-            printf -- "\r\n--%s\r\nContent-Disposition: form-data; name=\"file2\"; filename=\"%s\"\r\nContent-Type: application/octet-stream\r\n\r\n" "${_boundary}" "$(basename "${5}")"
-            cat "${5}"
-            printf -- "\r\n--%s\r\nContent-Disposition: form-data; name=\"parameters1\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${_boundary}" "${_params}"
-            printf -- "--%s\r\nContent-Disposition: form-data; name=\"parameters2\"\r\nContent-Type: application/json\r\n\r\n%s\r\n" "${_boundary}" "${_params}"
-            printf -- "--%s--\r\n" "${_boundary}"
-        } | /usr/bin/curl --silent --write-out '\n%{http_code}' -X POST "${IRIDA_BASE_URL}/api/samples/${_sample_id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: multipart/form-data; boundary=${_boundary}" --data-binary @-
-    )
-    _http_code=$( echo "${_response}" | /usr/bin/tail -1 )
-    _response=$( echo "${_response}" | /usr/bin/head -n -1 )
+    _http_code=$( /usr/bin/tail -1 "${_tmpfile}" )
+    _response=$( /usr/bin/head -n -1 "${_tmpfile}" )
     case "${_http_code}" in
         201) echo "${_response}" | /usr/bin/jq '{pair_id: .resource.identifier, r1: .resource.forwardSequenceFile.fileName, r1_id: .resource.forwardSequenceFile.identifier, r1_size: .resource.forwardSequenceFile.fileSizeBytes, r1_sha256: .resource.forwardSequenceFile.uploadSha256, r2: .resource.reverseSequenceFile.fileName, r2_id: .resource.reverseSequenceFile.identifier, r2_size: .resource.reverseSequenceFile.fileSizeBytes, r2_sha256: .resource.reverseSequenceFile.uploadSha256, created: (.resource.createdDate / 1000 | strftime("%Y-%m-%d")), processingState: .resource.processingState}' | /usr/bin/mlr --ijson --opprint cat ;;
         400) echo "ERROR: HTTP 400 - $( echo "${_response}" | /usr/bin/jq -r '.message // "bad request"' )" >&2 ; return 1 ;;

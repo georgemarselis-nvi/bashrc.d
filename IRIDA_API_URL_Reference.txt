@@ -34,7 +34,8 @@ TEXT REFERENCE
 
 /usr/bin/curl --silent -X GET    "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}/pairs/{pairId}/files/{fileId}" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Accept: application/fastq"
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@/path/to/file.fastq.gz"
-/usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file1=@R1.fastq.gz" -F "file2=@R2.fastq.gz"
+# BUG: /api/samples/{id}/sequenceFiles/pairs does NOT work for POST - use /api/samples/{id}/pairs instead (confirmed empirically, see bashrc.d#27)
+/usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file1=@R1.fastq.gz" -F "file2=@R2.fastq.gz" -F "parameters1=@params.json;type=application/json" -F "parameters2=@params.json;type=application/json"
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}/sequenceFiles/fast5" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@/path/to/file.fast5"
 /usr/bin/curl --silent -X DELETE "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/{id}/sequenceFiles/{fileId}" -H "Authorization: Bearer ${IRIDA_TOKEN}"
 
@@ -175,7 +176,8 @@ EXAMPLES
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/samples" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"sampleName":"sampleName","description":"description","organism":"organism","collectionDate":"collectionDate","collectedBy":"collectedBy"}'
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/projects/105/users" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"userId":"gmarselis","role":"PROJECT_USER"}'
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@/path/to/file.fastq.gz"
-/usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file1=@R1.fastq.gz" -F "file2=@R2.fastq.gz"
+# BUG: /api/samples/{id}/sequenceFiles/pairs does NOT work for POST - use /api/samples/{id}/pairs instead (confirmed empirically, see bashrc.d#27)
+/usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/pairs" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file1=@R1.fastq.gz" -F "file2=@R2.fastq.gz" -F "parameters1=@params.json;type=application/json" -F "parameters2=@params.json;type=application/json"
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/samples/8563/sequenceFiles/fast5" -H "Authorization: Bearer ${IRIDA_TOKEN}" -F "file=@/path/to/file.fast5"
 /usr/bin/curl --silent -X POST   "http://irida.vigasp.vetinst.no:8080/irida-23.01.3/api/sequencingrun" -H "Authorization: Bearer ${IRIDA_TOKEN}" -H "Content-Type: application/json" -d '{"layoutType":"PAIRED_END","sequencerType":"miseq","uploadStatus":"UPLOADING"}'
 
