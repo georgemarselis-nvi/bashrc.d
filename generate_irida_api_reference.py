@@ -110,8 +110,13 @@ SECTIONS = [
          "fileName carries R1/R2 convention. NOTE: ONLY endpoint where Accept header has effect - all others return text/plain regardless."),
         ("POST",   "/api/samples/{id}/sequenceFiles",
          "Upload a single-end FASTQ file. Multipart form field: file=@/path/to/file.fastq.gz"),
+        ("POST",   "/api/samples/{id}/pairs",
+         "Upload a paired-end FASTQ pair. Multipart form fields: file1=@R1.fastq.gz file2=@R2.fastq.gz, "
+         "parameters1=JSON, parameters2=JSON ({miseqRunId, layoutType}). "
+         "Confirmed working. See bashrc.d issue #27."),
         ("POST",   "/api/samples/{id}/sequenceFiles/pairs",
-         "Upload a paired-end FASTQ pair. Multipart form fields: file1=@R1.fastq.gz file2=@R2.fastq.gz"),
+         "\u25a0 BUG (IRIDA 23.01.3): documented upload endpoint does NOT work for POST - use /api/samples/{id}/pairs instead. "
+         "Confirmed empirically. See bashrc.d issue #27."),
         ("POST",   "/api/samples/{id}/sequenceFiles/fast5",
          "Upload a FAST5 file. Multipart form field: file=@/path/to/file.fast5"),
         ("DELETE", "/api/samples/{id}/sequenceFiles/{fileId}",
